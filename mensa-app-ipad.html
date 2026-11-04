@@ -519,7 +519,8 @@ table.plate tbody th { white-space: nowrap; }
   text-align: center;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
-.toast.show { transform: translate(-50%, 0); }
+.toast { opacity: 0; visibility: hidden; pointer-events: none; }
+.toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
 
 /* ----- Druckbereich (Bildschirm: versteckt) ----- */
 #print-root { display: none; }
