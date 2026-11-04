@@ -1,0 +1,2846 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#ffffff">
+  <title>Mensa High-Protein</title>
+  <style>
+/* ==========================================================================
+   styles.css – helles, ruhiges App-Design (Yazio-inspiriert)
+   Weiß, viel Luft, grüner Akzent, Tab-Leiste unten.
+   ========================================================================== */
+
+:root {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --soft: #f5f7f6;
+  --line: #e8ecea;
+  --text: #15191a;
+  --muted: #7d8785;
+  --accent: #2bb673;
+  --accent-dark: #1f9a60;
+  --accent-soft: #e7f7ef;
+  --orange: #f08a24;
+  --orange-soft: #fff1e3;
+  --danger: #e5484d;
+  --radius: 20px;
+  --shadow: 0 1px 2px rgba(20, 30, 25, 0.05), 0 4px 16px rgba(20, 30, 25, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+html, body { background: var(--bg); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3 { margin: 0; line-height: 1.2; letter-spacing: -0.01em; }
+h1 { font-size: 26px; font-weight: 700; }
+h2 { font-size: 20px; font-weight: 650; }
+h3 { font-size: 16px; font-weight: 650; }
+p { margin: 0; }
+ol.steps { padding-left: 22px; margin: 8px 0; }
+ol.steps li { margin-bottom: 8px; }
+
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.block { display: block; }
+.mt { margin-top: 14px; }
+.pad { padding: 14px 16px; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.warn { color: var(--orange); font-size: 13px; display: block; margin-top: 6px; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 12px; }
+.eyebrow {
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.eyebrow.dept { margin: 18px 4px 8px; }
+.label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 0 8px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+
+/* ----- Layout ----- */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 20px 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+}
+.topbar-title p { font-size: 14px; color: var(--muted); margin-top: 2px; }
+.topbar-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+.stack-sm { display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row.wrap { flex-wrap: wrap; }
+.row.between { justify-content: space-between; }
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  border: 1px solid var(--line);
+}
+.card.hero { background: linear-gradient(180deg, var(--accent-soft), #fff); border-color: transparent; }
+.card.recipe {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+.card.recipe:active { transform: scale(0.99); }
+.card.person { display: flex; flex-direction: column; gap: 10px; }
+.list { padding: 0; overflow: hidden; }
+
+.row-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--line);
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+.list > .row-item:first-child { border-top: 0; }
+.row-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); flex: 0 0 auto; }
+.row-item.done .grow { opacity: 0.45; text-decoration: line-through; }
+.row-item .pack { font-size: 14px; font-weight: 600; color: var(--accent-dark); white-space: nowrap; }
+
+/* ----- Buttons ----- */
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--soft);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.primary.dark { background: var(--text); }
+.btn.ghost { background: transparent; border: 1px dashed #cfd8d4; color: var(--muted); font-weight: 500; }
+.btn.danger-soft { background: #fdecec; color: var(--danger); }
+.btn.small-btn { width: auto; min-height: 40px; padding: 8px 14px; font-size: 15px; }
+.file-btn { cursor: pointer; }
+
+.icon, .round, .pill-btn, .step, .seg, .chip, .link {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+}
+.icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+}
+.pill-btn {
+  border: 0;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.round {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent-soft);
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+.round:disabled { opacity: 0.35; }
+.link { background: none; border: 0; color: var(--muted); font-size: 14px; padding: 4px 6px; }
+.link.danger { color: var(--danger); }
+
+.step {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--soft);
+  font-size: 18px;
+  color: var(--text);
+  flex: 0 0 auto;
+}
+.g-input { width: 92px; text-align: right; padding: 8px 10px; }
+
+.input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+.input:focus { outline: 2px solid var(--accent); outline-offset: 0; background: #fff; }
+select.input { appearance: auto; }
+textarea.input { resize: vertical; }
+.input[type="number"] { font-variant-numeric: tabular-nums; }
+
+/* ----- Tags & Chips ----- */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag.green { background: var(--accent-soft); color: var(--accent-dark); }
+.tag.orange { background: var(--orange-soft); color: #b8640e; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 0;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+.chip.on { background: var(--text); color: #fff; }
+.chip.nogo.on { background: var(--danger); }
+.chip:disabled { opacity: 0.4; }
+
+.seg-group { display: inline-flex; background: var(--soft); border-radius: 12px; padding: 3px; flex-wrap: wrap; gap: 3px; }
+.seg {
+  border: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+.seg.on { background: #fff; color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.seg:disabled { opacity: 0.4; }
+
+/* ----- Tagesstreifen ----- */
+.dstrip { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
+.dstrip::-webkit-scrollbar { display: none; }
+.dpill {
+  flex: 1 0 auto;
+  min-width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.dpill span { font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.dpill b { font-size: 20px; color: var(--text); font-weight: 650; }
+.dpill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.dpill.on b, .dpill.on span { color: #fff; }
+
+/* ----- Personen-Avatare ----- */
+.avatars { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.avatar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px 6px 6px;
+  border-radius: 999px;
+  background: var(--soft);
+  border: 1px solid transparent;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.avatar .av { background: var(--c); }
+.avatar .av-name { font-weight: 600; font-size: 14px; }
+.avatar .av-state { font-size: 12px; color: var(--accent-dark); }
+.avatar.off { background: #fff; border: 1px dashed #cfd8d4; }
+.avatar.off .av { background: #cfd8d4 !important; }
+.avatar.off .av-name { text-decoration: line-through; color: var(--muted); }
+.avatar.off .av-state { color: var(--danger); }
+.av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.av.big { width: 46px; height: 46px; font-size: 16px; background: var(--c); }
+
+/* ----- Mahlzeiten ----- */
+.meals { display: flex; flex-direction: column; gap: 10px; }
+.meal {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-radius: 18px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  overflow: hidden;
+}
+.meal.sel { border-color: var(--accent); background: var(--accent-soft); }
+.meal-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.meal-main:disabled { cursor: default; }
+.meal-info {
+  width: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 26px;
+  flex: 0 0 auto;
+}
+.meal .check {
+  position: absolute;
+  top: 12px;
+  right: 56px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.slot { font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.meal.sel .slot { color: var(--accent-dark); }
+.meal-title { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.recipe .meal-title { font-size: 17px; }
+
+/* ----- Fortschritt ----- */
+.progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 18px; font-size: 14px; }
+.progress-head b { font-size: 15px; }
+.bar { height: 8px; border-radius: 999px; background: var(--soft); overflow: hidden; margin-top: 8px; }
+.bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.3s ease; }
+
+/* ----- Tabellen ----- */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.plain th, table.plain td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+table.plain thead th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+table.plate { min-width: 640px; }
+table.plate th, table.plate td { border-bottom: 1px solid var(--line); padding: 9px 8px; vertical-align: top; text-align: left; font-size: 13px; }
+table.plate thead th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+table.plate tbody th { white-space: nowrap; }
+
+/* ----- Tab-Leiste ----- */
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: saturate(1.4) blur(14px);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  border-top: 1px solid var(--line);
+}
+.tabbtn {
+  flex: 1;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabbtn span { font-size: 22px; line-height: 1.1; filter: grayscale(1); opacity: 0.7; }
+.tabbtn.active { color: var(--accent-dark); }
+.tabbtn.active span { filter: none; opacity: 1; }
+
+/* ----- Modal ----- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(15, 20, 18, 0.35);
+  overflow-y: auto;
+}
+.modal-box {
+  width: 100%;
+  max-width: 760px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15);
+}
+@media (min-width: 700px) {
+  .modal { align-items: center; }
+  .modal-box { border-radius: 24px; max-height: 88vh; }
+}
+.modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form .check { display: flex; align-items: center; gap: 10px; font-size: 15px; }
+.form .check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.vault-grid { display: flex; flex-direction: column; gap: 10px; }
+.person .name { font-weight: 600; font-size: 17px; }
+.file-btn input { display: none; }
+
+/* ----- v5: Wochenplan ----- */
+.actions { display: flex; flex-direction: column; gap: 10px; }
+.dayrow { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.dayrow.empty { border-style: dashed; background: #fbfcfb; }
+.dayhead { display: flex; align-items: center; gap: 12px; }
+.daydate { width: 48px; flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; }
+.dshort { font-size: 12px; font-weight: 650; text-transform: uppercase; color: var(--muted); }
+.daydate b { font-size: 20px; }
+.meal-pick { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border: 0; background: none; text-align: left; font: inherit; color: var(--text); cursor: pointer; }
+.pchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; border: 0; background: var(--soft); font: inherit; font-size: 13px; color: var(--text); cursor: pointer; }
+.pchip .av { background: var(--c); width: 24px; height: 24px; font-size: 10px; }
+.pchip.off { background: #fff; border: 1px dashed #cfd8d4; color: var(--danger); text-decoration: line-through; }
+.pchip.off .av { background: #cfd8d4; }
+.icon.ghost { background: transparent; width: 34px; height: 34px; font-size: 16px; color: var(--muted); }
+.warn-inline { color: var(--orange); font-size: 13px; }
+.linklike { background: none; border: 0; text-align: left; font: inherit; color: var(--text); padding: 0; cursor: pointer; }
+.row-item .linklike { flex: 1; }
+
+/* ----- Toast ----- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 160%);
+  transition: transform 0.3s ease;
+  background: var(--text);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 60;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.toast.show { transform: translate(-50%, 0); }
+
+/* ----- Druckbereich (Bildschirm: versteckt) ----- */
+#print-root { display: none; }
+
+@media (max-width: 480px) {
+  .topbar h1 { font-size: 22px; }
+  .grid2 { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   DRUCK: Seite 1 = fixierter Plan (nur gewählte Gerichte) · Seite 2 = Einkauf
+   ========================================================================== */
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body { background: #fff !important; color: #000 !important; }
+  #app, #modal, #toast { display: none !important; }
+  #print-root { display: block !important; color: #000; font-size: 10pt; }
+
+  .print-page { break-after: page; page-break-after: always; }
+  .print-page:last-child { break-after: auto; page-break-after: auto; }
+  .print-page h1 { font-size: 15pt; margin: 0 0 4px; }
+  .print-page h3 { font-size: 11pt; margin: 10px 0 4px; border-bottom: 1px solid #999; }
+  .print-page .small { font-size: 8.5pt; }
+
+  .print-table { width: 100%; border-collapse: collapse; font-size: 8pt; table-layout: fixed; margin-top: 6px; }
+  .print-table th, .print-table td {
+    border: 1px solid #888;
+    padding: 4px 5px;
+    vertical-align: top;
+    text-align: left;
+    color: #000;
+    background: #fff;
+    word-wrap: break-word;
+  }
+  .print-table thead th { background: #eee !important; }
+  .print-table td.off { color: #666; font-style: italic; }
+
+  .print-list { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 10mm; font-size: 10pt; }
+  .print-list li { break-inside: avoid; margin-bottom: 5px; }
+  .print-box {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid #000;
+    margin-right: 6px;
+    vertical-align: -1px;
+  }
+}
+
+</style>
+</head>
+<body>
+
+  <div id="app">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="topbar-title">Wochenplan</h1>
+        <p id="topbar-sub"></p>
+      </div>
+    </header>
+
+    <main id="view" class="main"></main>
+
+    <nav class="tabbar" aria-label="Hauptnavigation">
+      <button class="tabbtn" data-action="tab" data-value="plan" data-tab-btn="plan"><span>🗓️</span>Wochenplan</button>
+      <button class="tabbtn" data-action="tab" data-value="einkauf" data-tab-btn="einkauf"><span>🛒</span>Einkauf</button>
+      <button class="tabbtn" data-action="tab" data-value="mehr" data-tab-btn="mehr"><span>⚙️</span>Einstellungen</button>
+    </nav>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button class="icon" data-action="closeModal" aria-label="Schließen">✕</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Druckbereich: nur beim Drucken sichtbar -->
+  <div id="print-root"></div>
+
+              <script>
+/* ==========================================================================
+   lidl_catalog.js – Lidl-Einzelprodukte
+   Nährwerte pro 100 g (roh bzw. trocken). Packungsgrößen = echte Lidl-Gebinde.
+   Felder: id, name, brand, dept, season, roles, tags, kcal, protein, carbs, fat,
+           packG (Packungsgröße in g), packLabel (Anzeige auf der Einkaufsliste)
+   roles: welche Bausteine das Produkt im Baukasten einnehmen kann
+          (protein | carb | veggie | salad | extra)
+   tags:  Allergen-/Vorlieben-Merkmale (huhn, rind, fisch, lachs, garnele,
+          schwein, vegetarisch, pilze, scharf, weizen)
+   ========================================================================== */
+
+const SEASON_TAGS = {
+  herbst_winter: 'Herbst / Winter',
+  fruehling_sommer: 'Frühling / Sommer',
+  ganzjaehrig: 'Ganzjährig'
+};
+
+/* Laufweg im Lidl-Markt – bestimmt die Sortierung der Einkaufsliste */
+const DEPARTMENTS = [
+  { key: 'obst', label: 'Obst, Gemüse, Kürbis & Salate', order: 1 },
+  { key: 'fleisch', label: 'Frischfleisch & Fisch', order: 2 },
+  { key: 'kuehl', label: 'Kühlregal (Milbona / Chef Select)', order: 3 },
+  { key: 'trocken', label: 'Trockensortiment (Golden Sun)', order: 4 },
+  { key: 'tk', label: 'Tiefkühltruhe (Freshona)', order: 5 },
+  { key: 'backshop', label: 'Backshop & Brot', order: 6 },
+  { key: 'extra', label: 'Eigene Zusatzwünsche', order: 7 }
+];
+
+function lidlItem(id, name, brand, dept, season, roles, tags, kcal, protein, carbs, fat, packG, packLabel) {
+  return { id, name, brand, dept, season, roles, tags, kcal, protein, carbs, fat, packG, packLabel };
+}
+
+const LIDL_CATALOG = [
+  /* ---------- Frischfleisch & Fisch ---------- */
+  lidlItem('huhn_innen', 'Hähnchen-Innenfilets', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['huhn'], 110, 23, 0, 1.5, 600, '600 g Metzgerfrisch'),
+  lidlItem('huhn_brust', 'Hähnchenbrustfilet', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['huhn'], 105, 23.5, 0, 1, 600, '600 g Metzgerfrisch'),
+  lidlItem('cornflakes_chicken', 'Crispy Cornflakes Chicken', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['huhn', 'weizen'], 190, 18, 17, 7, 400, '400 g Cornflakes Chicken'),
+  lidlItem('lachs', 'Lachsfilet (MSC)', 'Ocean Sea', 'fleisch', 'ganzjaehrig', ['protein'], ['fisch', 'lachs'], 180, 20, 0, 11, 250, '250 g Ocean Sea Lachs'),
+  lidlItem('garnele', 'Riesengarnelen (roh, ohne Schale)', 'Ocean Sea', 'fleisch', 'ganzjaehrig', ['protein', 'extra'], ['fisch', 'garnele'], 90, 20, 0.5, 1, 250, '250 g Ocean Sea Garnelen'),
+  lidlItem('hack', 'Rinderhack light (5 % Fett)', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['rind'], 130, 21, 0, 5, 500, '500 g Rinderhack light'),
+  lidlItem('schwein', 'Schweinefilet', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['schwein'], 120, 21, 0.3, 3.5, 500, '500 g Schweinefilet'),
+
+  /* ---------- Kühlregal ---------- */
+  lidlItem('skyr', 'Skyr Natur', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 63, 11, 4, 0.2, 500, '500 g Milbona Skyr'),
+  lidlItem('huettenkaese', 'Hüttenkäse', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 98, 11.5, 3.4, 4.3, 200, '200 g Milbona Hüttenkäse'),
+  lidlItem('feta', 'Feta light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 170, 15, 3, 13, 200, '200 g Milbona Feta light'),
+  lidlItem('gnocchi', 'Gnocchi', 'Chef Select', 'kuehl', 'ganzjaehrig', ['carb'], ['weizen'], 150, 4, 30, 1, 500, '500 g Chef Select Gnocchi'),
+
+  /* ---------- Trockensortiment ---------- */
+  lidlItem('linsen', 'Rote Linsen (trocken)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['protein'], ['vegetarisch'], 340, 24, 50, 1.5, 500, '500 g Golden Sun Linsen'),
+  lidlItem('reis', 'Jasminreis (trocken)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], [], 350, 7, 78, 0.6, 500, '500 g Golden Sun Jasminreis'),
+  lidlItem('reisnudeln', 'Reisbandnudeln (trocken)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], [], 360, 6, 80, 1, 400, '400 g Golden Sun Reisbandnudeln'),
+  lidlItem('kokosmilch', 'Kokosmilch', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], [], 190, 2, 3, 19, 400, '400 ml Golden Sun Kokosmilch'),
+  lidlItem('currypaste', 'Rote Currypaste', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['scharf'], 130, 2, 8, 9, 70, '70 g Rote Currypaste'),
+
+  /* ---------- Obst, Gemüse, Kürbis & Salate ---------- */
+  lidlItem('kartoffel', 'Speisekartoffeln (festkochend)', '', 'obst', 'ganzjaehrig', ['carb'], [], 75, 2, 15, 0.1, 1000, '1 kg Speisekartoffeln'),
+  lidlItem('drillinge', 'Drillinge', '', 'obst', 'ganzjaehrig', ['carb'], [], 75, 2, 15, 0.1, 750, '750 g Drillinge'),
+  lidlItem('suesskartoffel', 'Süßkartoffeln', '', 'obst', 'ganzjaehrig', ['carb'], [], 86, 1.6, 20, 0.1, 1000, '1 kg Süßkartoffeln'),
+  lidlItem('kuerbis_hokkaido', 'Hokkaido-Kürbis (ungeschält)', '', 'obst', 'herbst_winter', ['carb', 'veggie'], [], 26, 1, 6, 0.1, 1000, '1 kg Hokkaido-Kürbis'),
+  lidlItem('butternut', 'Butternut-Kürbis', '', 'obst', 'herbst_winter', ['carb', 'veggie'], [], 45, 1, 11, 0.1, 1000, '1 kg Butternut-Kürbis'),
+  lidlItem('spinat', 'Babyspinat', '', 'obst', 'ganzjaehrig', ['veggie'], [], 23, 2.9, 3.6, 0.4, 200, '200 g Babyspinat'),
+  lidlItem('spitzkohl', 'Spitzkohl', '', 'obst', 'herbst_winter', ['veggie'], [], 25, 1.3, 6, 0.1, 1000, '1 kg Spitzkohl'),
+  lidlItem('rosenkohl', 'Rosenkohl', '', 'obst', 'herbst_winter', ['veggie'], [], 43, 3.4, 9, 0.3, 500, '500 g Rosenkohl'),
+  lidlItem('zucchini', 'Zucchini', '', 'obst', 'fruehling_sommer', ['veggie'], [], 17, 1.2, 3, 0.3, 500, '500 g Zucchini'),
+  lidlItem('spargel', 'Grüner Spargel', '', 'obst', 'fruehling_sommer', ['veggie'], [], 20, 2.2, 3.9, 0.1, 500, '500 g grüner Spargel'),
+  lidlItem('paprika', 'Paprika (bunt)', '', 'obst', 'fruehling_sommer', ['veggie'], [], 31, 1, 6, 0.3, 500, '500 g Paprika'),
+  lidlItem('champignons', 'Champignons', '', 'obst', 'ganzjaehrig', ['extra'], ['pilze'], 22, 3.1, 0.3, 0.3, 250, '250 g Champignons'),
+  lidlItem('feldsalat', 'Feldsalat', '', 'obst', 'herbst_winter', ['salad'], [], 21, 2, 2, 0.4, 100, '100 g Feldsalat'),
+  lidlItem('rote_bete', 'Rote-Bete-Salat', 'Chef Select', 'obst', 'herbst_winter', ['salad'], [], 60, 1.5, 11, 1.5, 330, '330 g Chef Select Rote Bete'),
+  lidlItem('krautsalat', 'Krautsalat', 'Chef Select', 'obst', 'herbst_winter', ['salad'], [], 80, 1, 8, 5, 500, '500 g Chef Select Krautsalat'),
+  lidlItem('gurkensalat', 'Gurkensalat', 'Chef Select', 'obst', 'ganzjaehrig', ['salad'], [], 50, 1, 4, 3, 300, '300 g Chef Select Gurkensalat'),
+  lidlItem('eisberg', 'Eisbergsalat', '', 'obst', 'fruehling_sommer', ['salad'], [], 14, 0.9, 2, 0.2, 350, '1 Kopf Eisbergsalat'),
+  lidlItem('tomaten', 'Snack-Tomaten', '', 'obst', 'fruehling_sommer', ['salad'], [], 18, 0.9, 3.9, 0.2, 500, '500 g Snack-Tomaten'),
+
+  /* ---------- Tiefkühltruhe ---------- */
+  lidlItem('brokkoli', 'Brokkoli (TK-Röschen)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie'], [], 34, 2.8, 7, 0.4, 400, '400 g Freshona Brokkoli'),
+  lidlItem('bohnen', 'Prinzessbohnen (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie'], [], 31, 1.8, 7, 0.1, 400, '400 g Freshona Prinzessbohnen'),
+  lidlItem('asia_tk', 'Asia-Gemüse-Mix (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie'], [], 35, 2.5, 6, 0.3, 400, '400 g Freshona Asia-Mix')
+];
+
+const CATALOG_BY_ID = Object.fromEntries(LIDL_CATALOG.map(item => [item.id, item]));
+
+;
+/* ==========================================================================
+   lidl_catalog_extra.js – erweitert den Lidl-Katalog um Gemüse, Obst,
+   Milchprodukte, Dosenware, Pasta, Wraps und Saucen.
+   Nährwerte pro 100 g (ca.-Richtwerte, bitte am Etikett prüfen).
+   Lädt NACH lidl_catalog.js.
+   ========================================================================== */
+
+const LIDL_CATALOG_EXTRA = [
+  /* ---------- Obst, Gemüse & Salate ---------- */
+  lidlItem('karotten', 'Karotten', '', 'obst', 'ganzjaehrig', ['veggie'], [], 41, 0.9, 9.6, 0.2, 1000, '1 kg Karotten'),
+  lidlItem('blumenkohl', 'Blumenkohl', '', 'obst', 'herbst_winter', ['veggie'], [], 25, 1.9, 5, 0.3, 600, 'Kopf Blumenkohl (ca. 600 g)'),
+  lidlItem('lauch', 'Lauch', '', 'obst', 'herbst_winter', ['veggie'], [], 31, 1.5, 7, 0.3, 500, '500 g Lauch'),
+  lidlItem('zwiebeln', 'Zwiebeln', '', 'obst', 'ganzjaehrig', ['extra'], [], 40, 1.1, 9, 0.1, 1000, '1 kg Zwiebeln'),
+  lidlItem('knoblauch', 'Knoblauch', '', 'obst', 'ganzjaehrig', ['extra'], [], 149, 6, 33, 0.5, 50, '1 Knolle Knoblauch'),
+  lidlItem('aubergine', 'Aubergine', '', 'obst', 'fruehling_sommer', ['veggie'], [], 25, 1, 6, 0.2, 400, '400 g Aubergine'),
+  lidlItem('fenchel', 'Fenchelknolle', '', 'obst', 'herbst_winter', ['veggie'], [], 31, 1.2, 7, 0.2, 400, '1 Fenchelknolle (ca. 400 g)'),
+  lidlItem('rucola', 'Rucola', '', 'obst', 'fruehling_sommer', ['salad'], [], 25, 2.6, 3.7, 0.7, 75, '75 g Rucola'),
+  lidlItem('avocado', 'Avocado', '', 'obst', 'ganzjaehrig', ['salad'], [], 160, 2, 9, 15, 180, '1 Avocado (ca. 180 g)'),
+  lidlItem('gurke', 'Salatgurke', '', 'obst', 'fruehling_sommer', ['salad', 'veggie'], [], 15, 0.7, 3.6, 0.1, 350, '1 Salatgurke (ca. 350 g)'),
+  lidlItem('radieschen', 'Radieschen', '', 'obst', 'fruehling_sommer', ['veggie', 'salad'], [], 16, 0.7, 3.4, 0.1, 200, '200 g Radieschen'),
+  lidlItem('kohlrabi', 'Kohlrabi', '', 'obst', 'herbst_winter', ['veggie'], [], 27, 1.7, 6.2, 0.1, 500, '500 g Kohlrabi'),
+  lidlItem('pak_choi', 'Pak Choi', '', 'obst', 'ganzjaehrig', ['veggie', 'salad'], [], 13, 1.5, 2.2, 0.2, 250, '250 g Pak Choi'),
+  lidlItem('sojasprossen', 'Sojasprossen', '', 'obst', 'ganzjaehrig', ['veggie'], [], 30, 3, 6, 0.2, 200, '200 g Sojasprossen'),
+  lidlItem('mango', 'Mango', '', 'obst', 'fruehling_sommer', ['salad', 'extra'], [], 60, 0.8, 15, 0.4, 500, '500 g Mango'),
+  lidlItem('apfel', 'Äpfel', '', 'obst', 'herbst_winter', ['extra'], [], 52, 0.3, 14, 0.2, 1000, '1 kg Äpfel'),
+  lidlItem('banane', 'Bananen', '', 'obst', 'ganzjaehrig', ['extra'], [], 89, 1.1, 23, 0.3, 1000, '1 kg Bananen'),
+  lidlItem('heidelbeeren', 'Heidelbeeren', '', 'obst', 'fruehling_sommer', ['extra'], [], 57, 0.7, 14, 0.3, 250, '250 g Heidelbeeren'),
+  lidlItem('erdbeeren', 'Erdbeeren', '', 'obst', 'fruehling_sommer', ['extra'], [], 32, 0.7, 7.7, 0.3, 500, '500 g Erdbeeren'),
+
+  /* ---------- Frischfleisch & Fisch ---------- */
+  lidlItem('putenbrust', 'Putenbrustfilet', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['huhn'], 105, 24, 0, 1, 500, '500 g Metzgerfrisch Putenbrust'),
+  lidlItem('haehnchen_keule', 'Hähnchenkeulen (ohne Haut)', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['huhn'], 120, 19, 0, 5, 1000, '1 kg Metzgerfrisch Keulen'),
+  lidlItem('rinder_steak', 'Rinderhüftsteak', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['rind'], 140, 22, 0, 5.5, 300, '300 g Rinderhüftsteak'),
+  lidlItem('seelachs', 'Seelachsfilet', 'Ocean Sea', 'fleisch', 'ganzjaehrig', ['protein'], ['fisch'], 90, 19, 0, 1.2, 300, '300 g Ocean Sea Seelachs'),
+
+  /* ---------- Kühlregal ---------- */
+  lidlItem('quark', 'Magerquark', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 67, 12, 4, 0.2, 500, '500 g Milbona Magerquark'),
+  lidlItem('mozzarella_light', 'Mozzarella light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 170, 22, 1, 9, 125, '125 g Mozzarella light'),
+  lidlItem('frischkaese_light', 'Frischkäse light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 110, 9, 4, 8, 200, '200 g Frischkäse light'),
+  lidlItem('schmand_light', 'Schmand light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 120, 4, 4, 11, 200, '200 g Schmand light'),
+  lidlItem('eier', 'Eier (Bodenhaltung)', '', 'kuehl', 'ganzjaehrig', ['protein'], ['vegetarisch'], 143, 12.6, 0.7, 9.5, 630, '10 Eier (ca. 630 g)'),
+  lidlItem('parmesan', 'Parmesan (gerieben)', 'Deluxe', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 392, 36, 0, 27, 150, '150 g Parmesan'),
+  lidlItem('tofu', 'Tofu natur', 'Vantastic', 'kuehl', 'ganzjaehrig', ['protein'], ['vegetarisch'], 76, 8, 1, 4.8, 200, '200 g Tofu natur'),
+
+  /* ---------- Tiefkühltruhe ---------- */
+  lidlItem('edamame', 'Edamame (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['protein', 'veggie'], ['vegetarisch'], 121, 11.9, 8.9, 5.2, 400, '400 g Freshona Edamame'),
+  lidlItem('erbsen_tk', 'Erbsen (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie'], [], 81, 5.4, 14, 0.4, 400, '400 g Freshona Erbsen'),
+
+  /* ---------- Trockensortiment & Dosen ---------- */
+  lidlItem('kichererbsen', 'Kichererbsen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 120, 7, 15, 2.5, 240, '240 g Golden Sun Kichererbsen'),
+  lidlItem('kidneybohnen', 'Kidneybohnen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 110, 7.5, 15, 0.7, 240, '240 g Golden Sun Kidneybohnen'),
+  lidlItem('thunfisch', 'Thunfisch in eigenem Saft (Abtropfgewicht)', 'Ocean Sea', 'trocken', 'ganzjaehrig', ['protein'], ['fisch'], 100, 22, 0, 1, 160, '160 g Ocean Sea Thunfisch'),
+  lidlItem('mais_dose', 'Mais (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['veggie', 'extra'], [], 90, 3.3, 19, 1.5, 285, '285 g Golden Sun Mais'),
+  lidlItem('penne', 'Penne (Hartweizen)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], ['weizen'], 350, 12, 70, 1.5, 500, '500 g Golden Sun Penne'),
+  lidlItem('quinoa', 'Quinoa (trocken)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], [], 368, 14, 64, 6, 500, '500 g Golden Sun Quinoa'),
+  lidlItem('bulgur', 'Bulgur (trocken)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], ['weizen'], 342, 12, 76, 1.3, 500, '500 g Golden Sun Bulgur'),
+  lidlItem('tortilla_wraps', 'Weizen-Tortillas (8 Stück)', 'Chef Select', 'trocken', 'ganzjaehrig', ['carb'], ['weizen'], 300, 8, 50, 7.5, 320, '320 g Chef Select Wraps'),
+  lidlItem('pesto', 'Pesto Genovese', 'Deluxe', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 480, 5, 5, 47, 190, '190 g Deluxe Pesto'),
+  lidlItem('passierte_tomaten', 'Passierte Tomaten', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], [], 32, 1.6, 5.7, 0.2, 500, '500 g Golden Sun Passierte Tomaten'),
+  lidlItem('tomatenmark', 'Tomatenmark', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], [], 82, 4.5, 15, 0.5, 200, '200 g Golden Sun Tomatenmark'),
+  lidlItem('sojasauce', 'Sojasauce', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['weizen'], 60, 8, 5.6, 0.6, 250, '250 ml Golden Sun Sojasauce'),
+  lidlItem('sriracha', 'Sriracha-Sauce', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['scharf'], 90, 2, 16, 1, 300, '300 ml Golden Sun Sriracha'),
+  lidlItem('salsa', 'Salsa (mild bis scharf)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['scharf'], 40, 1.5, 7, 0.5, 380, '380 g Golden Sun Salsa'),
+  lidlItem('ananas_dose', 'Ananasstücke (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], [], 60, 0.5, 14, 0.1, 340, '340 g Golden Sun Ananas'),
+  lidlItem('oliven', 'Oliven (entsteint, Abtropfgewicht)', 'Deluxe', 'trocken', 'ganzjaehrig', ['extra'], [], 145, 1, 4, 15, 150, '150 g Deluxe Oliven'),
+  lidlItem('haferflocken', 'Haferflocken', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], [], 370, 13, 59, 7, 500, '500 g Golden Sun Haferflocken'),
+
+  /* ---------- Backshop & Brot ---------- */
+  lidlItem('vollkornbrot', 'Vollkornbrot (Scheiben)', 'Lidl Backshop', 'backshop', 'ganzjaehrig', ['carb'], ['weizen'], 250, 9, 40, 3, 500, '500 g Vollkornbrot'),
+];
+
+LIDL_CATALOG.push(...LIDL_CATALOG_EXTRA);
+LIDL_CATALOG_EXTRA.forEach(item => { CATALOG_BY_ID[item.id] = item; });
+
+/* Beispiel-Angebote dieser Woche – bitte mit dem aktuellen Lidl-Prospekt abgleichen
+   (in der App änderbar). */
+const DEFAULT_OFFER_IDS = ['huhn_brust', 'paprika', 'zucchini', 'lachs', 'passierte_tomaten', 'mozzarella_light', 'kichererbsen', 'tofu'];
+
+;
+/* ==========================================================================
+   recipes_db.js – 36 ausgeschriebene Rezepte + Speicherlogik für eigene Rezepte
+   Mengen (g) in den Komponenten gelten für eine Referenzperson mit 45 g Protein
+   pro Hauptmahlzeit. app.js skaliert Kohlenhydrate, Gemüse, Salat und Extras
+   individuell; das Hauptprotein wird exakt auf das Ziel der Person berechnet.
+   Kategorien: gefluegel | fisch | rind | tiktok
+   Saisons:    herbst_winter | fruehling_sommer | all
+   ========================================================================== */
+
+const RECIPE_CATEGORIES = {
+  gefluegel: 'Geflügel',
+  fisch: 'Fisch',
+  rind: 'Rind & Schwein',
+  tiktok: 'TikTok / Trend'
+};
+
+const RECIPE_SEASONS = {
+  herbst_winter: '🍂 Herbst / Winter',
+  fruehling_sommer: '☀️ Frühling / Sommer',
+  all: '🌍 Ganzjährig'
+};
+
+/* Kurzform für Komponenten-Aufbau: R({...}) erzeugt das Rezept-Objekt */
+function R(o) {
+  return {
+    id: o.id,
+    title: o.t,
+    category: o.cat,
+    season: o.s,
+    prepTime: o.prep,
+    components: {
+      protein: { id: o.p },
+      carb: { id: o.carb[0], g: o.carb[1] },
+      veggie: { id: o.veg[0], g: o.veg[1] },
+      salad: { id: o.salad[0], g: o.salad[1] },
+      extras: (o.extras || []).map(e => ({ id: e[0], g: e[1] }))
+    },
+    steps: o.steps
+  };
+}
+
+const RECIPES = [
+  /* ===================== 🍂 HERBST / WINTER (Kürbis-Fokus) ===================== */
+  R({
+    id: 'r01', t: 'Herbst-Ofenblech: Crispy Chicken mit Hokkaido, Brokkoli, Kräuter-Skyr & Feldsalat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 35, p: 'huhn_innen',
+    carb: ['kuerbis_hokkaido', 200], veg: ['brokkoli', 150], salad: ['feldsalat', 60], extras: [['skyr', 40]],
+    steps: [
+      'Backofen auf 200 °C Ober-/Unterhitze vorheizen. Hokkaido ungeschält waschen, entkernen und in 2 cm dicke Spalten schneiden.',
+      'Kürbisspalten mit 1 EL Rapsöl, Paprikapulver, Salz und Pfeffer mischen und 20 Minuten auf dem Blech vorgaren.',
+      'Hähnchen-Innenfilets würzen, mit den TK-Brokkoliröschen zum Kürbis legen und 15 Minuten weitergaren, bis das Fleisch durch ist (Kerntemperatur 72 °C).',
+      'Skyr mit gehackten Kräutern, Zitronenabrieb und Salz verrühren. Feldsalat waschen, alles anrichten und den Skyr als Klecks daneben setzen.'
+    ]
+  }),
+  R({
+    id: 'r02', t: 'Cremige Kürbis-Gnocchi-Pfanne mit Hähnchenbrust, Babyspinat & Rote-Bete-Salat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 25, p: 'huhn_brust',
+    carb: ['gnocchi', 150], veg: ['spinat', 100], salad: ['rote_bete', 80], extras: [['kuerbis_hokkaido', 120], ['huettenkaese', 60]],
+    steps: [
+      'Hähnchenbrustfilet in Würfel schneiden, salzen, pfeffern und in einer beschichteten Pfanne in 1 TL Öl rundum goldbraun braten. Herausnehmen.',
+      'Kürbiswürfel in der Pfanne 8 Minuten mit einem Schluck Wasser weich schmoren, Gnocchi dazugeben und 4 Minuten braten.',
+      'Hüttenkäse mit etwas Gemüsebrühe, Muskat und Salz pürieren und als Sauce unter die Gnocchi rühren. Babyspinat und Hähnchen kurz mitschwenken.',
+      'Rote-Bete-Salat aus dem Glas abtropfen lassen und als Beilage zur Pfanne servieren.'
+    ]
+  }),
+  R({
+    id: 'r03', t: 'TikTok Stuffed Hokkaido mit Rinderhack light, Reis, Feta light & Krautsalat',
+    cat: 'tiktok', s: 'herbst_winter', prep: 30, p: 'hack',
+    carb: ['reis', 100], veg: ['kuerbis_hokkaido', 200], salad: ['krautsalat', 80], extras: [['feta', 25]],
+    steps: [
+      'Hokkaido halbieren, Kerne mit einem Löffel entfernen. Die Hälften mit Öl und Salz einreiben und 25 Minuten bei 200 °C backen.',
+      'Reis nach Packungsanleitung garen. Rinderhack in einer Pfanne krümelig braten, würzen und mit dem Reis vermengen.',
+      'Die gebackenen Kürbishälften mit der Hack-Reis-Mischung füllen, Feta light darüber bröseln und 5 Minuten zurück in den Ofen geben.',
+      'Krautsalat dazu servieren, eventuell mit Pfeffer und Apfelessig nachwürzen.'
+    ]
+  }),
+  R({
+    id: 'r04', t: 'Honig-Senf-Lachs vom Blech mit Ofen-Kürbis, Kartoffeln, Prinzessbohnen & Gurkensalat',
+    cat: 'fisch', s: 'herbst_winter', prep: 30, p: 'lachs',
+    carb: ['kartoffel', 150], veg: ['bohnen', 150], salad: ['gurkensalat', 70], extras: [['skyr', 40]],
+    steps: [
+      'Kartoffeln halbieren, mit Öl und Rosmarin auf das Blech geben und 15 Minuten bei 200 °C vorgaren.',
+      'Skyr mit Dijon-Senf und einem Teelöffel Honig verrühren. Lachsfilets salzen und mit der Senf-Skyr-Masse bestreichen.',
+      'Lachs und TK-Prinzessbohnen auf das Blech zu den Kartoffeln legen und weitere 12 bis 15 Minuten garen.',
+      'Gurkensalat aus dem Glas danebenlegen und alles direkt vom Blech servieren.'
+    ]
+  }),
+  R({
+    id: 'r05', t: 'Deftige Spitzkohl-Hack-Pfanne mit Kümmel-Kartoffeln, Skyr-Klecks & Rote-Bete-Apfel-Salat',
+    cat: 'rind', s: 'herbst_winter', prep: 25, p: 'hack',
+    carb: ['kartoffel', 150], veg: ['spitzkohl', 200], salad: ['rote_bete', 60], extras: [['skyr', 40]],
+    steps: [
+      'Kartoffeln in Scheiben schneiden, mit Kümmel und Salz in der Pfanne mit etwas Öl 15 Minuten knusprig braten.',
+      'Spitzkohl in feine Streifen schneiden und zu den Kartoffeln geben, 5 Minuten mitgaren.',
+      'Rinderhack krümelig anbraten, würzen und unter das Gemüse mischen, bis alles durchgegart ist.',
+      'Mit Skyr und dem Rote-Bete-Salat servieren; wer mag, streut frische Apfelwürfel darüber.'
+    ]
+  }),
+  R({
+    id: 'r06', t: 'Kürbis-Kokos-Red-Curry mit Hähnchen & Garnelen, Jasminreis, Asia-Gemüse & Eisbergsalat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 25, p: 'huhn_innen',
+    carb: ['reis', 100], veg: ['asia_tk', 150], salad: ['eisberg', 60],
+    extras: [['garnele', 45], ['kokosmilch', 100], ['currypaste', 15], ['kuerbis_hokkaido', 100]],
+    steps: [
+      'Jasminreis nach Packungsanleitung garen. Hokkaido in kleine Würfel schneiden.',
+      'Currypaste in einem Topf kurz anrösten, Kokosmilch dazugeben und mit Kürbiswürfeln 10 Minuten köcheln lassen.',
+      'Hähnchen-Innenfilets und Garnelen in Stücke schneiden, in die Sauce geben und 6 Minuten garziehen lassen.',
+      'Asia-Gemüse aus der Tiefkühltruhe zugeben, mit Jasminreis und Eisbergsalat (in Streifen) servieren.'
+    ]
+  }),
+  R({
+    id: 'r07', t: 'Süßkartoffel-Kürbis-Mash mit knusprigen Rinderhack-Bällchen, Brokkoli & Feldsalat',
+    cat: 'rind', s: 'herbst_winter', prep: 25, p: 'hack',
+    carb: ['suesskartoffel', 180], veg: ['brokkoli', 150], salad: ['feldsalat', 60], extras: [['kuerbis_hokkaido', 100]],
+    steps: [
+      'Süßkartoffeln und Kürbiswürfel schälen bzw. schneiden, in Salzwasser 15 Minuten weich kochen.',
+      'Abgießen, mit einem Stampfer zu Mash verarbeiten, mit Muskat, Salz und einem Schuss Wasser cremig rühren.',
+      'Rinderhack mit Salz, Pfeffer und Paprika zu kleinen Bällchen formen und in der Pfanne rundum knusprig braten.',
+      'TK-Brokkoli dämpfen, mit Feldsalat auf den Mash und die Bällchen anrichten.'
+    ]
+  }),
+  R({
+    id: 'r08', t: 'Kürbis-Linsen-Bowl vegetarisch mit Skyr, Babyspinat & Rote Bete',
+    cat: 'tiktok', s: 'herbst_winter', prep: 25, p: 'linsen',
+    carb: ['kuerbis_hokkaido', 200], veg: ['spinat', 120], salad: ['rote_bete', 60], extras: [['skyr', 60]],
+    steps: [
+      'Rote Linsen mit der doppelten Menge Wasser aufkochen und 10 bis 12 Minuten weich köcheln, dann abgießen.',
+      'Hokkaido-Würfel im Ofen bei 200 °C mit Öl und Kreuzkümmel 20 Minuten rösten.',
+      'Babyspinat kurz in der Pfanne zusammenfallen lassen, mit Salz und Zitrone würzen.',
+      'Linsen, Kürbis und Spinat in eine Schüssel geben, Skyr als Klecks obendrauf und Rote-Bete-Salat dazu.'
+    ]
+  }),
+  R({
+    id: 'r09', t: 'Schweinefilet-Ofenblech mit Kartoffeln, Rosenkohl & Krautsalat',
+    cat: 'rind', s: 'herbst_winter', prep: 30, p: 'schwein',
+    carb: ['kartoffel', 150], veg: ['rosenkohl', 150], salad: ['krautsalat', 80],
+    steps: [
+      'Ofen auf 190 °C Ober-/Unterhitze vorheizen. Kartoffeln vierteln, mit Öl, Thymian und Salz würzen und 15 Minuten vorbacken.',
+      'Rosenkohl putzen, halbieren und mit auf das Blech geben.',
+      'Schweinefilet mit Salz, Pfeffer und Senf einreiben, in die Mitte des Blechs legen und 15 bis 18 Minuten garen (Kern 62 °C).',
+      'Filet 5 Minuten ruhen lassen, in Scheiben schneiden und mit Kartoffeln, Rosenkohl und Krautsalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r10', t: 'Butternut-Hähnchen-Curry-Bowl mit Reis & Gurkensalat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 25, p: 'huhn_brust',
+    carb: ['reis', 100], veg: ['butternut', 200], salad: ['gurkensalat', 60], extras: [['kokosmilch', 60], ['currypaste', 15]],
+    steps: [
+      'Butternut schälen, entkernen und in 2 cm große Würfel schneiden. In der Pfanne mit Öl 8 Minuten anbraten.',
+      'Hähnchenbrust in Streifen schneiden und zum Kürbis geben, mit Currypaste würzen und mitbraten.',
+      'Kokosmilch angießen und 8 Minuten köcheln, bis Kürbis weich und das Hähnchen durch ist.',
+      'Reis garen, mit dem Curry in Bowls anrichten und den Gurkensalat dazu essen.'
+    ]
+  }),
+  R({
+    id: 'r11', t: 'Hähnchen-Rosenkohl-Pfanne mit Drillingen & Krautsalat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 30, p: 'huhn_innen',
+    carb: ['drillinge', 150], veg: ['rosenkohl', 150], salad: ['krautsalat', 60], extras: [['skyr', 50]],
+    steps: [
+      'Drillinge halbieren und in der Pfanne mit Öl und Salz 12 Minuten braten, bis sie außen knusprig sind.',
+      'Rosenkohl putzen, halbieren und dazugeben, weitere 6 Minuten braten.',
+      'Hähnchen-Innenfilets würzen, in einer zweiten Pfanne rundum braten, in Stücke schneiden und zurück in die Pfanne geben.',
+      'Mit Krautsalat und einem Klecks Skyr mit Zitrone servieren.'
+    ]
+  }),
+  R({
+    id: 'r12', t: 'Lachs-Rosenkohl mit Reisbandnudeln & Asia-Dressing',
+    cat: 'tiktok', s: 'herbst_winter', prep: 20, p: 'lachs',
+    carb: ['reisnudeln', 100], veg: ['rosenkohl', 150], salad: ['gurkensalat', 60], extras: [],
+    steps: [
+      'Reisbandnudeln nach Packungsanleitung garen, abgießen und kalt abschrecken.',
+      'Rosenkohl halbieren und in der Pfanne 8 Minuten braten, bis er Röstaromen hat.',
+      'Lachsfilet in der Pfanne mit der Hautseite zuerst 4 Minuten braten, wenden und weitere 2 Minuten garen.',
+      'Nudeln mit Rosenkohl und Lachs mischen; Dressing aus Sojasauce, Limette und Honig darüberträufeln, Gurkensalat dazu.'
+    ]
+  }),
+  R({
+    id: 'r13', t: 'Rinderhack-Kartoffel-Auflauf mit Champignons & Spinat',
+    cat: 'rind', s: 'herbst_winter', prep: 35, p: 'hack',
+    carb: ['kartoffel', 200], veg: ['spinat', 120], salad: ['feldsalat', 50], extras: [['champignons', 60], ['huettenkaese', 60]],
+    steps: [
+      'Ofen auf 190 °C vorheizen. Kartoffeln in dünne Scheiben hobeln und in einer Auflaufform schichten.',
+      'Champignons in Scheiben braten, Rinderhack dazugeben, würzen und krümelig durchbraten.',
+      'Hack, Champignons und Spinat auf die Kartoffeln schichten, Hüttenkäse mit etwas Brühe pürieren und darübergeben.',
+      '25 bis 30 Minuten backen, bis die Kartoffeln weich sind. Mit Feldsalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r14', t: 'Garnelen-Kürbis-Pfanne mit Spinat & Feta',
+    cat: 'fisch', s: 'herbst_winter', prep: 20, p: 'garnele',
+    carb: ['kuerbis_hokkaido', 200], veg: ['spinat', 120], salad: ['feldsalat', 50], extras: [['feta', 20]],
+    steps: [
+      'Hokkaido in Würfel schneiden und in der Pfanne mit Öl 10 Minuten braten, bis er Biss hat.',
+      'Garnelen salzen, zum Kürbis geben und 2 bis 3 Minuten braten, bis sie rosa sind.',
+      'Babyspinat dazugeben und kurz zusammenfallen lassen; Feta light darüber bröseln.',
+      'Mit Feldsalat und einer Zitronen-Vinaigrette servieren.'
+    ]
+  }),
+  R({
+    id: 'r15', t: 'Hokkaido-Hähnchen-Traybake mit Brokkoli, Feta & Feldsalat',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 35, p: 'huhn_brust',
+    carb: ['kuerbis_hokkaido', 200], veg: ['brokkoli', 150], salad: ['feldsalat', 60], extras: [['feta', 30]],
+    steps: [
+      'Ofen auf 200 °C vorheizen. Hokkaido in Spalten und Hähnchenbrust in grobe Stücke schneiden.',
+      'Alles mit Öl, Thymian, Knoblauchpulver und Salz auf einem Blech verteilen und 20 Minuten backen.',
+      'TK-Brokkoli für die letzten 8 Minuten dazugeben und mitbacken.',
+      'Feta light zerbröseln, über das Blech streuen und mit Feldsalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r16', t: 'Kartoffel-Hack-Pfanne mit Paprika & Krautsalat',
+    cat: 'rind', s: 'all', prep: 20, p: 'hack',
+    carb: ['drillinge', 150], veg: ['paprika', 150], salad: ['krautsalat', 60], extras: [['skyr', 40]],
+    steps: [
+      'Drillinge halbieren und in der Pfanne mit Öl 10 Minuten knusprig braten.',
+      'Paprika in Streifen schneiden und 5 Minuten mitbraten.',
+      'Rinderhack zugeben, krümelig braten, würzen und alles vermengen.',
+      'Mit Krautsalat und Skyr-Klecks servieren.'
+    ]
+  }),
+
+  /* ===================== ☀️ FRÜHLING / SOMMER & GANZJÄHRIG ===================== */
+  R({
+    id: 'r17', t: 'Crispy Cornflakes Chicken Bowl mit Reis, Zucchini, Tomaten & Skyr-Dip',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'cornflakes_chicken',
+    carb: ['reis', 100], veg: ['zucchini', 150], salad: ['tomaten', 80], extras: [['skyr', 60]],
+    steps: [
+      'Reis nach Packungsanleitung garen. Zucchini in Halbmonde schneiden.',
+      'Cornflakes Chicken im Ofen bei 200 °C 15 Minuten knusprig garen, bis es durch ist.',
+      'Zucchini in der Pfanne mit Öl 5 Minuten anbraten und salzen.',
+      'Skyr mit Knoblauchpulver, Salz und Schnittlauch verrühren. Alles in einer Bowl mit Tomaten anrichten.'
+    ]
+  }),
+  R({
+    id: 'r18', t: 'TikTok Salmon Bowl mit Reis, Asia-Gemüse & Gurkensalat',
+    cat: 'tiktok', s: 'all', prep: 15, p: 'lachs',
+    carb: ['reis', 100], veg: ['asia_tk', 150], salad: ['gurkensalat', 60], extras: [['skyr', 60]],
+    steps: [
+      'Reis garen. Asia-Gemüse aus der Tiefkühltruhe direkt in der Pfanne mit Öl 5 Minuten braten.',
+      'Lachsfilet würzen und in der Pfanne 3 Minuten pro Seite braten.',
+      'Skyr mit Sojasauce und Sesamöl verrühren, als Sauce auf die Bowl geben.',
+      'Reis, Gemüse, Lachs und Gurkensalat schichtweise in der Bowl anrichten.'
+    ]
+  }),
+  R({
+    id: 'r19', t: 'Creamy Chicken Gnocchi mit Spinat & Tomaten',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'huhn_brust',
+    carb: ['gnocchi', 150], veg: ['spinat', 120], salad: ['tomaten', 60], extras: [['huettenkaese', 60]],
+    steps: [
+      'Hähnchenbrust in Würfel schneiden, würzen und in der Pfanne goldbraun braten.',
+      'Gnocchi in einer zweiten Pfanne mit Öl 5 Minuten knusprig braten.',
+      'Hüttenkäse mit einem Schuss Wasser, Knoblauch und Salz zur cremigen Sauce pürieren und in die Pfanne geben.',
+      'Babyspinat unterrühren, Hähnchen zugeben und mit halbierten Tomaten servieren.'
+    ]
+  }),
+  R({
+    id: 'r20', t: 'Big Mac Auflauf mit Kartoffeln, Paprika & Eisbergsalat',
+    cat: 'tiktok', s: 'all', prep: 35, p: 'hack',
+    carb: ['kartoffel', 150], veg: ['paprika', 150], salad: ['eisberg', 60], extras: [['skyr', 60]],
+    steps: [
+      'Kartoffeln in Scheiben schneiden und in Salzwasser 8 Minuten vorgaren; abgießen.',
+      'Rinderhack mit Paprika und Zwiebel anbraten. Skyr mit Senf, Gurkenwürfeln und Essig als Big-Mac-Sauce anrühren.',
+      'Kartoffeln, Hack und Paprika in eine Form schichten, Sauce darübergeben.',
+      '25 Minuten bei 200 °C backen und mit Eisbergsalat-Streifen servieren.'
+    ]
+  }),
+  R({
+    id: 'r21', t: 'Crispy Rice Salad mit Garnelen, Spargel & Gurkensalat',
+    cat: 'fisch', s: 'fruehling_sommer', prep: 20, p: 'garnele',
+    carb: ['reis', 100], veg: ['spargel', 150], salad: ['gurkensalat', 80], extras: [['skyr', 40]],
+    steps: [
+      'Reis garen, abkühlen lassen und in einer Pfanne mit etwas Öl knusprig anbraten.',
+      'Spargel schräg in Stücke schneiden und 4 Minuten mit den Garnelen braten.',
+      'Garnelen salzen und zitronig abschmecken.',
+      'Reis mit Spargel und Garnelen mischen, Skyr mit Zitrone als Dip und Gurkensalat dazu.'
+    ]
+  }),
+  R({
+    id: 'r22', t: 'Souvlaki-Blech mit Drillingen, Paprika & Gurkensalat',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 30, p: 'huhn_brust',
+    carb: ['drillinge', 150], veg: ['paprika', 150], salad: ['gurkensalat', 80], extras: [['skyr', 60]],
+    steps: [
+      'Hähnchenbrust in Würfel schneiden und mit Olivenöl, Oregano, Knoblauch und Zitrone 20 Minuten marinieren.',
+      'Drillinge und Paprikastücke auf das Blech legen, mit Öl und Salz würzen.',
+      'Hähnchen-Spieße auf das Blech geben und alles 20 Minuten bei 220 °C backen.',
+      'Mit Gurkensalat und einem Skyr-Dip mit Gurke und Knoblauch servieren.'
+    ]
+  }),
+  R({
+    id: 'r23', t: 'Grüner-Spargel-Hähnchen-Pfanne mit Drillingen & Tomaten',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 25, p: 'huhn_innen',
+    carb: ['drillinge', 150], veg: ['spargel', 200], salad: ['tomaten', 60], extras: [['feta', 20]],
+    steps: [
+      'Drillinge halbieren und in der Pfanne mit Öl 12 Minuten braten, bis sie gar sind.',
+      'Holzende vom Spargel brechen, Stangen halbieren und 5 Minuten mitbraten.',
+      'Hähnchen-Innenfilets würzen und in einer zweiten Pfanne rundum goldbraun braten.',
+      'Alles zusammen anrichten, Tomaten dazulegen und Feta light darüber bröseln.'
+    ]
+  }),
+  R({
+    id: 'r24', t: 'Zucchini-Lachs-Ofen mit Kartoffeln, Eisbergsalat & Skyr-Dip',
+    cat: 'fisch', s: 'fruehling_sommer', prep: 30, p: 'lachs',
+    carb: ['kartoffel', 150], veg: ['zucchini', 200], salad: ['eisberg', 60], extras: [['skyr', 40]],
+    steps: [
+      'Kartoffeln in Spalten auf das Blech legen, mit Öl und Salz würzen und 15 Minuten bei 200 °C vorbacken.',
+      'Zucchini in Scheiben und Lachsfilets dazu auf das Blech legen, mit Zitronenscheiben belegen.',
+      'Alles weitere 12 Minuten backen, bis der Lachs in der Mitte noch saftig ist.',
+      'Skyr mit Dill und Salz verrühren und mit Eisbergsalat als Beilage servieren.'
+    ]
+  }),
+  R({
+    id: 'r25', t: 'Hack-Grillspieße mit Reis, Paprika & Tomatensalat',
+    cat: 'rind', s: 'fruehling_sommer', prep: 25, p: 'hack',
+    carb: ['reis', 100], veg: ['paprika', 150], salad: ['tomaten', 80], extras: [['skyr', 40]],
+    steps: [
+      'Rinderhack mit Paprikapulver, Kreuzkümmel und Salz würzen und zu länglichen Spießen formen.',
+      'Paprikastücke auf Holzspieße stecken und mit den Hack-Spießen auf dem Grill oder in der Grillpfanne garen.',
+      'Reis nach Packungsanleitung garen.',
+      'Mit Tomatensalat, Reis und Skyr-Dip servieren.'
+    ]
+  }),
+  R({
+    id: 'r26', t: 'Sommer-Garnelen-Pfanne mit Reisnudeln, Zucchini & Feta',
+    cat: 'fisch', s: 'fruehling_sommer', prep: 15, p: 'garnele',
+    carb: ['reisnudeln', 100], veg: ['zucchini', 150], salad: ['tomaten', 80], extras: [['feta', 20]],
+    steps: [
+      'Reisnudeln nach Packungsanleitung garen und abgießen.',
+      'Zucchini in Streifen in der Pfanne mit Öl 4 Minuten braten.',
+      'Garnelen zugeben, 3 Minuten braten und mit Salz, Chili und Limette würzen.',
+      'Nudeln untermischen, mit halbierten Tomaten und Feta light servieren.'
+    ]
+  }),
+  R({
+    id: 'r27', t: 'Caprese-Hähnchen mit Drillingen, Zucchini & Tomaten',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 25, p: 'huhn_brust',
+    carb: ['drillinge', 150], veg: ['zucchini', 150], salad: ['tomaten', 100], extras: [['feta', 25]],
+    steps: [
+      'Drillinge halbieren und mit Öl und Salz 15 Minuten im Ofen bei 200 °C backen.',
+      'Hähnchenbrust in Scheiben schneiden, würzen und mit Zucchini in der Pfanne 8 Minuten braten.',
+      'Tomaten halbieren, mit Feta light und Basilikum vermengen.',
+      'Hähnchen auf den Drillingen anrichten, Tomaten-Feta-Salat daneben servieren.'
+    ]
+  }),
+  R({
+    id: 'r28', t: 'Express-Hähnchen-Wok mit Asia-Gemüse & Reis',
+    cat: 'gefluegel', s: 'all', prep: 15, p: 'huhn_innen',
+    carb: ['reis', 100], veg: ['asia_tk', 200], salad: ['gurkensalat', 60], extras: [],
+    steps: [
+      'Reis nach Packungsanleitung garen.',
+      'Hähnchen-Innenfilets in Streifen schneiden und im heißen Wok mit Öl 4 Minuten braten.',
+      'Asia-Gemüse aus der Tiefkühltruhe zugeben und 4 Minuten mitbraten; mit Sojasauce abschmecken.',
+      'Mit Reis und Gurkensalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r29', t: 'Lachs-Spargel-Blech mit Kartoffeln & Feldsalat',
+    cat: 'fisch', s: 'fruehling_sommer', prep: 30, p: 'lachs',
+    carb: ['kartoffel', 150], veg: ['spargel', 200], salad: ['feldsalat', 60], extras: [['huettenkaese', 50]],
+    steps: [
+      'Kartoffeln vierteln und mit Öl und Salz 15 Minuten bei 200 °C vorbacken.',
+      'Spargel unten schälen, zu den Kartoffeln geben und weitere 5 Minuten backen.',
+      'Lachsfilets salzen, zu Gemüse und Kartoffeln legen und 10 Minuten fertig garen.',
+      'Hüttenkäse mit Zitrone und Dill verrühren, zusammen mit dem Feldsalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r30', t: 'Express-Rinderhack-Reispfanne mit Paprika & Gurkensalat',
+    cat: 'rind', s: 'all', prep: 15, p: 'hack',
+    carb: ['reis', 100], veg: ['paprika', 120], salad: ['gurkensalat', 60], extras: [['skyr', 40]],
+    steps: [
+      'Reis in der Pfanne mit Wasser nach Packungsanleitung garen; währenddessen Paprika in Würfel schneiden.',
+      'Rinderhack in einer zweiten Pfanne krümelig braten, Paprika dazugeben und 3 Minuten mitgaren.',
+      'Reis unterheben, mit Salz, Paprika und Kreuzkümmel abschmecken.',
+      'Mit Gurkensalat und einem Klecks Skyr servieren.'
+    ]
+  }),
+  R({
+    id: 'r31', t: 'Express-Garnelen-Wok mit Asia-Gemüse & Reisnudeln',
+    cat: 'fisch', s: 'all', prep: 12, p: 'garnele',
+    carb: ['reisnudeln', 100], veg: ['asia_tk', 150], salad: ['tomaten', 60], extras: [],
+    steps: [
+      'Reisnudeln mit kochendem Wasser übergießen und 4 Minuten ziehen lassen, abgießen.',
+      'Garnelen im heißen Wok mit Öl 2 Minuten braten, salzen.',
+      'Asia-Gemüse aus der Tiefkühltruhe und Sojasauce dazu, 4 Minuten mitbraten.',
+      'Nudeln untermischen und mit Tomaten servieren.'
+    ]
+  }),
+  R({
+    id: 'r32', t: 'Express-Hähnchen-Bowl mit Spinat & Eisbergsalat',
+    cat: 'gefluegel', s: 'all', prep: 15, p: 'huhn_innen',
+    carb: ['reis', 100], veg: ['spinat', 120], salad: ['eisberg', 60], extras: [['skyr', 40]],
+    steps: [
+      'Reis garen. Hähnchen-Innenfilets in dünne Scheiben schneiden und würzen.',
+      'Hähnchen in der Pfanne mit Öl 5 Minuten braten.',
+      'Babyspinat kurz in die Pfanne geben, bis er zusammenfällt.',
+      'Reis, Hähnchen-Spinat und Eisbergsalat in der Bowl anrichten, Skyr mit Zitrone als Dip dazu.'
+    ]
+  }),
+  R({
+    id: 'r33', t: 'Schweinefilet mit Ofen-Zucchini, Drillingen & Skyr-Dip',
+    cat: 'rind', s: 'fruehling_sommer', prep: 30, p: 'schwein',
+    carb: ['drillinge', 150], veg: ['zucchini', 150], salad: ['gurkensalat', 60], extras: [['skyr', 50]],
+    steps: [
+      'Drillinge halbieren, mit Öl und Rosmarin auf das Blech legen und 15 Minuten bei 200 °C vorbacken.',
+      'Zucchini in Stücke schneiden und mit auf das Blech geben.',
+      'Schweinefilet würzen, auf das Blech legen und 15 bis 18 Minuten garen, bis der Kern 62 °C hat.',
+      'Filet ruhen lassen, aufschneiden und mit Skyr-Dip und Gurkensalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r34', t: 'Teriyaki-Lachs-Reis mit Asia-Gemüse & Gurkensalat',
+    cat: 'tiktok', s: 'all', prep: 20, p: 'lachs',
+    carb: ['reis', 100], veg: ['asia_tk', 150], salad: ['gurkensalat', 60], extras: [],
+    steps: [
+      'Reis garen. Lachsfilet in Würfel schneiden.',
+      'Lachs in der Pfanne mit Öl 3 Minuten braten, mit Sojasauce und Honig glasieren.',
+      'Asia-Gemüse aus der Tiefkühltruhe in einer zweiten Pfanne 5 Minuten braten.',
+      'Reis, Gemüse, Lachs und Gurkensalat in der Bowl anrichten.'
+    ]
+  }),
+  R({
+    id: 'r35', t: 'Sommer-Linsen-Bowl mit Zucchini, Tomaten & Feta',
+    cat: 'tiktok', s: 'fruehling_sommer', prep: 25, p: 'linsen',
+    carb: ['reis', 80], veg: ['zucchini', 150], salad: ['tomaten', 80], extras: [['feta', 30]],
+    steps: [
+      'Rote Linsen in Wasser 10 bis 12 Minuten weich kochen und abgießen.',
+      'Reis nach Packungsanleitung garen.',
+      'Zucchini in Würfeln in der Pfanne mit Öl 5 Minuten braten; Tomaten halbieren.',
+      'Linsen, Reis und Gemüse in der Bowl mischen; Feta light zerbröseln und mit Zitronen-Dressing servieren.'
+    ]
+  }),
+  R({
+    id: 'r36', t: 'Chili-Hack-Bowl mit Paprika, Eisbergsalat & Hüttenkäse-Dip',
+    cat: 'rind', s: 'all', prep: 20, p: 'hack',
+    carb: ['reis', 100], veg: ['paprika', 150], salad: ['eisberg', 60], extras: [['currypaste', 15], ['huettenkaese', 50]],
+    steps: [
+      'Reis nach Packungsanleitung garen.',
+      'Rinderhack in der Pfanne krümelig braten, Paprikawürfel dazugeben und 5 Minuten mitbraten.',
+      'Currypaste unterrühren und kurz mitrösten, bis es aromatisch duftet.',
+      'Hüttenkäse mit Salz und Limette pürieren; alles mit Reis und Eisbergsalat in der Bowl anrichten.'
+    ]
+  })
+];
+
+/* ---------- Speicherlogik für eigene Nutzer-Rezepte (localStorage) ---------- */
+
+const CUSTOM_RECIPES_KEY = 'mensa.v3.customRecipes';
+
+function loadCustomRecipes() {
+  try {
+    const list = JSON.parse(localStorage.getItem(CUSTOM_RECIPES_KEY) || '[]');
+    return Array.isArray(list) ? list.filter(r => r && r.id && r.components) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCustomRecipe(recipe) {
+  try {
+    const list = loadCustomRecipes().filter(r => r.id !== recipe.id);
+    list.push({ ...recipe, custom: true });
+    localStorage.setItem(CUSTOM_RECIPES_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function deleteCustomRecipe(id) {
+  try {
+    const list = loadCustomRecipes().filter(r => r.id !== id);
+    localStorage.setItem(CUSTOM_RECIPES_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* Leitet Merkmale ab: Tags aus allen Zutaten, Weizenfrei-Status, Protein-Tags */
+function enrichRecipe(r) {
+  const c = r.components;
+  c.extras = c.extras || [];
+  const uses = [c.protein.id, c.carb.id, c.veggie.id, c.salad.id, ...c.extras.map(e => e.id)];
+  const tags = [...new Set(uses.flatMap(id => (CATALOG_BY_ID[id] ? CATALOG_BY_ID[id].tags : [])))];
+  const proteinTags = CATALOG_BY_ID[c.protein.id] ? CATALOG_BY_ID[c.protein.id].tags : [];
+  return {
+    ...r,
+    custom: !!r.custom,
+    uses,
+    tags,
+    proteinTags,
+    wheatFree: !tags.includes('weizen')
+  };
+}
+
+/* Alle Rezepte: Basis-Datenbank + eigene Rezepte aus dem localStorage */
+function getAllRecipes() {
+  return [...RECIPES, ...loadCustomRecipes()].map(enrichRecipe);
+}
+
+;
+/* ==========================================================================
+   recipes_extra.js – 23 weitere ausgeschriebene Rezepte (r37–r59)
+   Themen (italienisch, asiatisch, mexikanisch, grill, herbst, vegetarisch)
+   werden in app.js aus Titel und Protein abgeleitet.
+   Lädt NACH recipes_db.js (nutzt die Funktion R()).
+   ========================================================================== */
+
+RECIPES.push(
+  R({
+    id: 'r37', t: 'Italienische Hähnchen-Penne mit Zucchini, Tomaten & Parmesan',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'huhn_brust',
+    carb: ['penne', 100], veg: ['zucchini', 150], salad: ['rucola', 40],
+    extras: [['passierte_tomaten', 120], ['parmesan', 15]],
+    steps: [
+      'Penne in reichlich Salzwasser nach Packungsanleitung al dente kochen, abgießen und ein Tässchen Kochwasser aufheben.',
+      'Hähnchenbrust in Würfel schneiden, würzen und in der Pfanne mit Olivenöl goldbraun braten.',
+      'Zucchini-Würfel dazugeben, 4 Minuten mitbraten, dann passierte Tomaten und etwas Kochwasser einrühren.',
+      'Penne untermischen, mit Parmesan bestreuen und auf Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r38', t: 'Pasta-Garnelen-Pfanne mit Spinat & Kirschtomaten',
+    cat: 'fisch', s: 'all', prep: 15, p: 'garnele',
+    carb: ['penne', 100], veg: ['spinat', 120], salad: ['tomaten', 60],
+    extras: [['passierte_tomaten', 100]],
+    steps: [
+      'Penne nach Packungsanleitung kochen und abgießen.',
+      'Garnelen in der Pfanne mit etwas Öl und Knoblauchpulver 2 Minuten braten, salzen und herausnehmen.',
+      'Passierte Tomaten in die Pfanne geben, aufkochen, Babyspinat einrühren, bis er zusammenfällt.',
+      'Penne, Garnelen und halbierte Tomaten untermischen und sofort servieren.'
+    ]
+  }),
+  R({
+    id: 'r39', t: 'Caprese-Hähnchen-Penne mit Mozzarella light & Rucola',
+    cat: 'gefluegel', s: 'all', prep: 25, p: 'huhn_brust',
+    carb: ['penne', 100], veg: ['paprika', 150], salad: ['rucola', 40],
+    extras: [['mozzarella_light', 60], ['passierte_tomaten', 100]],
+    steps: [
+      'Penne kochen. Hähnchenbrust in Streifen schneiden und mit Oregano und Salz würzen.',
+      'Hähnchen in der Pfanne braten, Paprikastreifen dazugeben und 5 Minuten mitgaren.',
+      'Passierte Tomaten angießen, 3 Minuten köcheln, Penne unterheben.',
+      'Mozzarella light in Würfel schneiden, über die Pasta geben und auf Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r40', t: 'Lasagne-Style Gnocchi-Auflauf mit Hack, Spinat & Mozzarella',
+    cat: 'rind', s: 'all', prep: 30, p: 'hack',
+    carb: ['gnocchi', 150], veg: ['spinat', 120], salad: ['rucola', 40],
+    extras: [['passierte_tomaten', 120], ['mozzarella_light', 50]],
+    steps: [
+      'Ofen auf 200 °C vorheizen. Rinderhack in der Pfanne krümelig braten, würzen und mit passierten Tomaten 5 Minuten köcheln.',
+      'Gnocchi und Babyspinat in eine Auflaufform schichten, Hack-Tomaten-Sauce darüber verteilen.',
+      'Mozzarella light in Scheiben auf den Auflauf legen.',
+      '20 Minuten backen, bis der Käse goldbraun ist. Mit Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r41', t: 'Thunfisch-Pizza-Bowl mit Mais, Paprika & Rucola',
+    cat: 'fisch', s: 'all', prep: 15, p: 'thunfisch',
+    carb: ['reis', 100], veg: ['paprika', 150], salad: ['rucola', 40],
+    extras: [['passierte_tomaten', 80], ['mozzarella_light', 40], ['mais_dose', 30]],
+    steps: [
+      'Reis nach Packungsanleitung garen.',
+      'Paprika in der Pfanne mit Öl 4 Minuten braten; passierte Tomaten mit Oregano dazugeben und kurz einkochen.',
+      'Thunfisch abtropfen lassen und mit Mais unter die Tomatensauce heben.',
+      'Reis in die Bowl, Thunfisch-Sauce darauf, Mozzarella light und Rucola obendrauf.'
+    ]
+  }),
+  R({
+    id: 'r42', t: 'Risotto-Style Erbsen-Hähnchen mit Parmesan & Rucola',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 25, p: 'huhn_innen',
+    carb: ['reis', 100], veg: ['erbsen_tk', 150], salad: ['rucola', 40],
+    extras: [['parmesan', 15], ['quark', 60]],
+    steps: [
+      'Reis in einer Pfanne mit Zwiebelwürfeln anschwitzen, nach und nach mit Brühe ablöschen und 15 Minuten rühren.',
+      'Hähnchen-Innenfilets würzen, separat goldbraun braten und in Stücke schneiden.',
+      'Erbsen aus der Tiefkühltruhe 3 Minuten mitkochen, Magerquark und Parmesan unterrühren.',
+      'Hähnchen auf dem cremigen Reis anrichten und mit Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r43', t: 'Mexikanische Hähnchen-Burrito-Bowl mit Mais, Kidneybohnen & Avocado',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'huhn_brust',
+    carb: ['reis', 100], veg: ['paprika', 150], salad: ['avocado', 80],
+    extras: [['kidneybohnen', 80], ['mais_dose', 60], ['salsa', 40], ['quark', 50]],
+    steps: [
+      'Reis garen. Hähnchenbrust in Würfel schneiden, mit Kreuzkümmel und Paprikapulver würzen und in der Pfanne braten.',
+      'Paprika in Streifen dazugeben und 4 Minuten mitbraten.',
+      'Kidneybohnen und Mais kurz erwärmen, Avocado in Würfel schneiden.',
+      'Alles in der Bowl anrichten, Salsa darüber und Quark mit Limette als Dip dazu.'
+    ]
+  }),
+  R({
+    id: 'r44', t: 'Taco-Hack mit Kidneybohnen, Salsa & Eisbergsalat',
+    cat: 'rind', s: 'all', prep: 20, p: 'hack',
+    carb: ['tortilla_wraps', 80], veg: ['paprika', 120], salad: ['eisberg', 60],
+    extras: [['kidneybohnen', 80], ['salsa', 50], ['schmand_light', 40]],
+    steps: [
+      'Rinderhack krümelig anbraten, mit Kreuzkümmel, Paprika und Salz würzen.',
+      'Paprika in feinen Würfeln mitbraten und die abgetropften Kidneybohnen dazugeben.',
+      'Wraps in der trockenen Pfanne kurz anwärmen.',
+      'Hack in die Wraps füllen, Salsa, Eisbergsalat und Schmand light darauf geben.'
+    ]
+  }),
+  R({
+    id: 'r45', t: 'Fajita-Pute mit Paprika, Zwiebeln & Quark-Dip',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'putenbrust',
+    carb: ['tortilla_wraps', 80], veg: ['paprika', 150], salad: ['tomaten', 60],
+    extras: [['zwiebeln', 40], ['quark', 60]],
+    steps: [
+      'Putenbrust in dünne Streifen schneiden, mit Paprikapulver, Kreuzkümmel und Salz marinieren.',
+      'Fleisch in der heißen Pfanne 3 Minuten anbraten, Paprika- und Zwiebelstreifen dazugeben und weitere 5 Minuten braten.',
+      'Quark mit Knoblauchpulver, Salz und Limette verrühren.',
+      'Fajitas in den Wraps mit Tomatenwürfeln und Quark-Dip servieren.'
+    ]
+  }),
+  R({
+    id: 'r46', t: 'Hähnchenkeulen-Ofengemüse mit Karotten, Blumenkohl & Kichererbsen',
+    cat: 'gefluegel', s: 'herbst_winter', prep: 40, p: 'haehnchen_keule',
+    carb: ['kartoffel', 150], veg: ['blumenkohl', 200], salad: ['gurke', 60],
+    extras: [['karotten', 150], ['kichererbsen', 80]],
+    steps: [
+      'Ofen auf 200 °C vorheizen. Kartoffeln vierteln, Karotten in Stücke und Blumenkohl in Röschen schneiden.',
+      'Gemüse, Kartoffeln und abgetropfte Kichererbsen mit Öl, Paprika und Thymian auf dem Blech verteilen.',
+      'Hähnchenkeulen würzen, obenauf legen und alles 35 bis 40 Minuten backen, bis das Fleisch durch ist.',
+      'Mit Gurkenscheiben als frische Beilage servieren.'
+    ]
+  }),
+  R({
+    id: 'r47', t: 'Veggie-Curry mit Kichererbsen, Spinat & Tofu',
+    cat: 'tiktok', s: 'all', prep: 25, p: 'tofu',
+    carb: ['reis', 100], veg: ['spinat', 150], salad: ['pak_choi', 60],
+    extras: [['kokosmilch', 80], ['currypaste', 15], ['kichererbsen', 60]],
+    steps: [
+      'Tofu trocken tupfen, in Würfel schneiden und in der Pfanne rundum knusprig braten. Herausnehmen.',
+      'Currypaste in der Pfanne kurz anrösten, Kokosmilch angießen und Kichererbsen 8 Minuten köcheln.',
+      'Babyspinat und Pak Choi einrühren, bis sie zusammenfallen.',
+      'Tofu wieder dazugeben, mit Reis servieren.'
+    ]
+  }),
+  R({
+    id: 'r48', t: 'Asia-Tofu-Wok mit Pak Choi, Sojasprossen & Sojasauce',
+    cat: 'tiktok', s: 'all', prep: 15, p: 'tofu',
+    carb: ['reisnudeln', 100], veg: ['asia_tk', 150], salad: ['gurke', 60],
+    extras: [['sojasauce', 20], ['sojasprossen', 100]],
+    steps: [
+      'Reisnudeln mit kochendem Wasser übergießen, 4 Minuten ziehen lassen und abgießen.',
+      'Tofuwürfel im heißen Wok mit wenig Öl 5 Minuten knusprig braten.',
+      'Asia-Gemüse und Sojasprossen dazugeben, 3 Minuten braten und mit Sojasauce ablöschen.',
+      'Nudeln untermischen und mit Gurkenstreifen servieren.'
+    ]
+  }),
+  R({
+    id: 'r49', t: 'Sriracha-Hähnchen mit Mango-Reis & Pak Choi',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'huhn_innen',
+    carb: ['reis', 100], veg: ['pak_choi', 200], salad: ['mango', 60],
+    extras: [['sriracha', 15], ['sojasauce', 15]],
+    steps: [
+      'Reis garen. Hähnchen-Innenfilets in Stücke schneiden und in der Pfanne 6 Minuten braten.',
+      'Sriracha und Sojasauce dazugeben und das Hähnchen darin glasieren.',
+      'Pak Choi halbiert in einer zweiten Pfanne 3 Minuten dünsten.',
+      'Reis mit Mangowürfeln, Hähnchen und Pak Choi anrichten.'
+    ]
+  }),
+  R({
+    id: 'r50', t: 'Ananas-Teriyaki-Pute mit Paprika & Reis',
+    cat: 'gefluegel', s: 'all', prep: 20, p: 'putenbrust',
+    carb: ['reis', 100], veg: ['paprika', 120], salad: ['gurke', 60],
+    extras: [['ananas_dose', 80], ['sojasauce', 20]],
+    steps: [
+      'Reis garen. Putenbrust in Würfel schneiden und in der Pfanne goldbraun braten.',
+      'Paprikawürfel und abgetropfte Ananas dazugeben und 4 Minuten mitbraten.',
+      'Mit Sojasauce ablöschen, kurz einkochen lassen, bis alles glänzt.',
+      'Mit Reis und Gurkenscheiben servieren.'
+    ]
+  }),
+  R({
+    id: 'r51', t: 'Grill-Hähnchenspieße mit Zucchini, Paprika & Kräuter-Quark',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 25, p: 'huhn_brust',
+    carb: ['drillinge', 150], veg: ['zucchini', 150], salad: ['tomaten', 80],
+    extras: [['quark', 60]],
+    steps: [
+      'Hähnchenbrust in Würfel schneiden, mit Öl, Paprika und Oregano 15 Minuten marinieren.',
+      'Hähnchen und Zucchinischeiben abwechselnd auf Spieße stecken.',
+      'Spieße auf dem Grill oder in der Grillpfanne 10 bis 12 Minuten garen, dabei wenden.',
+      'Quark mit Kräutern und Salz verrühren und mit Drillingen und Tomaten servieren.'
+    ]
+  }),
+  R({
+    id: 'r52', t: 'Grill-Lachs mit Fenchel, Kartoffeln & Rucola',
+    cat: 'fisch', s: 'fruehling_sommer', prep: 30, p: 'lachs',
+    carb: ['kartoffel', 150], veg: ['fenchel', 150], salad: ['rucola', 40],
+    extras: [['schmand_light', 40]],
+    steps: [
+      'Kartoffeln in Spalten schneiden und in Salzwasser 10 Minuten vorgaren.',
+      'Fenchel in Spalten schneiden, mit Kartoffeln mit Öl und Zitronenabrieb auf die Grillschale legen.',
+      'Lachsfilets salzen und 8 bis 10 Minuten mit Fenchel und Kartoffeln grillen.',
+      'Schmand light mit Dill verrühren und mit Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r53', t: 'Auberginen-Hack-Pfanne mit Quinoa & Feta',
+    cat: 'rind', s: 'all', prep: 25, p: 'hack',
+    carb: ['quinoa', 100], veg: ['aubergine', 200], salad: ['gurke', 60],
+    extras: [['feta', 25], ['passierte_tomaten', 80]],
+    steps: [
+      'Quinoa nach Packungsanleitung garen.',
+      'Auberginenwürfel in der Pfanne mit reichlich Öl 8 Minuten goldbraun braten.',
+      'Rinderhack dazugeben, krümelig braten, mit passierten Tomaten ablöschen und 5 Minuten köcheln.',
+      'Mit Quinoa mischen, Feta darüber bröseln und Gurkenwürfel als Beilage servieren.'
+    ]
+  }),
+  R({
+    id: 'r54', t: 'Quinoa-Lachs-Bowl mit Avocado, Radieschen & Mais',
+    cat: 'fisch', s: 'all', prep: 15, p: 'lachs',
+    carb: ['quinoa', 100], veg: ['radieschen', 80], salad: ['avocado', 80],
+    extras: [['mais_dose', 40]],
+    steps: [
+      'Quinoa garen, abkühlen lassen.',
+      'Lachsfilet würzen und in der Pfanne 3 Minuten pro Seite braten.',
+      'Radieschen in Scheiben schneiden, Avocado würfeln, Mais abtropfen lassen.',
+      'Quinoa, Gemüse und Lachs in der Bowl anrichten und mit Zitrone beträufeln.'
+    ]
+  }),
+  R({
+    id: 'r55', t: 'Bulgur-Hähnchen-Bowl mit Kohlrabi, Gurke & Quark-Dip',
+    cat: 'gefluegel', s: 'all', prep: 25, p: 'huhn_brust',
+    carb: ['bulgur', 100], veg: ['kohlrabi', 150], salad: ['gurke', 80],
+    extras: [['quark', 60]],
+    steps: [
+      'Bulgur mit der doppelten Menge heißem Wasser übergießen, 10 Minuten quellen lassen.',
+      'Hähnchenbrust würzen, braten und in Stücke schneiden.',
+      'Kohlrabi schälen, in Stifte schneiden und 4 Minuten in der Pfanne braten.',
+      'Bulgur, Hähnchen, Kohlrabi und Gurkenwürfel anrichten; Quark mit Zitrone und Dill als Dip dazu.'
+    ]
+  }),
+  R({
+    id: 'r56', t: 'Herbst-Linsen-Eintopf mit Karotten, Lauch & Kartoffeln',
+    cat: 'tiktok', s: 'herbst_winter', prep: 35, p: 'linsen',
+    carb: ['kartoffel', 150], veg: ['lauch', 150], salad: ['feldsalat', 40],
+    extras: [['karotten', 150], ['kuerbis_hokkaido', 100]],
+    steps: [
+      'Zwiebelwürfel in Öl glasig dünsten, Karottenscheiben und Kartoffelwürfel dazugeben.',
+      'Rote Linsen, Kürbiswürfel und Lauchringe zugeben, mit Gemüsebrühe aufgießen und 20 Minuten köcheln.',
+      'Mit Salz, Kreuzkümmel und Majoran abschmecken.',
+      'Eintopf in Schalen füllen und mit Feldsalat servieren.'
+    ]
+  }),
+  R({
+    id: 'r57', t: 'Frühlings-Erbsen-Omelett mit Schmand & Radieschen',
+    cat: 'tiktok', s: 'fruehling_sommer', prep: 15, p: 'eier',
+    carb: ['drillinge', 150], veg: ['erbsen_tk', 150], salad: ['radieschen', 60],
+    extras: [['schmand_light', 40]],
+    steps: [
+      'Drillinge in Scheiben schneiden und in der Pfanne mit Öl knusprig braten.',
+      'Erbsen dazugeben und 3 Minuten mitgaren.',
+      'Eier verquirlen, würzen, über das Gemüse gießen und stocken lassen.',
+      'Omelett mit Schmand light und Radieschenscheiben servieren.'
+    ]
+  }),
+  R({
+    id: 'r58', t: 'Spargel-Erbsen-Pasta mit Putenbrust & Parmesan',
+    cat: 'gefluegel', s: 'fruehling_sommer', prep: 25, p: 'putenbrust',
+    carb: ['penne', 100], veg: ['spargel', 150], salad: ['rucola', 40],
+    extras: [['erbsen_tk', 80], ['parmesan', 15]],
+    steps: [
+      'Penne in Salzwasser kochen; in den letzten 3 Minuten Erbsen mitkochen.',
+      'Spargel schälen, in Stücke schneiden und 5 Minuten in der Pfanne braten.',
+      'Putenbrust in Streifen würzen und goldbraun braten.',
+      'Pasta, Gemüse und Pute mischen, mit Parmesan bestreuen und auf Rucola servieren.'
+    ]
+  }),
+  R({
+    id: 'r59', t: 'Avocado-Hähnchen-Wraps mit Tomaten & Salsa',
+    cat: 'gefluegel', s: 'all', prep: 15, p: 'huhn_innen',
+    carb: ['tortilla_wraps', 80], veg: ['paprika', 120], salad: ['avocado', 80],
+    extras: [['salsa', 40], ['schmand_light', 30]],
+    steps: [
+      'Hähnchen-Innenfilets in Streifen schneiden, würzen und in der Pfanne 5 Minuten braten.',
+      'Paprika in feine Streifen schneiden und mit anbraten.',
+      'Avocado zerdrücken, mit Limette und Salz würzen.',
+      'Wraps mit Hähnchen, Paprika, Avocado, Salsa und Schmand light füllen und einrollen.'
+    ]
+  })
+);
+
+;
+/* ==========================================================================
+   bowls.js – Bowl-Datenbank: kombiniert Protein × Beilage × Gemüse × Salat × Sauce
+   aus dem Lidl-Katalog zu vielen verschiedenen Bowls. Die Auswahl ist
+   deterministisch (gleiche Bowls auf jedem Gerät), die Kombinationen sind
+   nicht von Hand geschrieben – so hat man immer neue Bowl-Ideen mit dem,
+   was ohnehin im Vorrat liegt.
+   Lädt NACH recipes_extra.js.
+   ========================================================================== */
+
+const BOWL_PROTEINS = ['huhn_innen', 'huhn_brust', 'putenbrust', 'lachs', 'garnele', 'hack', 'tofu', 'kichererbsen', 'thunfisch', 'linsen', 'edamame'];
+const BOWL_CARBS = ['reis', 'quinoa', 'reisnudeln', 'kartoffel', 'drillinge', 'suesskartoffel'];
+const BOWL_VEGS = ['brokkoli', 'paprika', 'zucchini', 'spinat', 'karotten', 'blumenkohl', 'asia_tk', 'pak_choi', 'rosenkohl', 'spargel', 'kohlrabi', 'aubergine', 'mais_dose', 'erbsen_tk', 'kuerbis_hokkaido'];
+const BOWL_SALADS = ['avocado', 'gurke', 'tomaten', 'rucola', 'eisberg', 'rote_bete', 'radieschen', 'mango', 'krautsalat'];
+const BOWL_SAUCES = ['skyr', 'quark', 'feta', 'pesto', 'salsa', 'sriracha', 'sojasauce', 'kokosmilch', 'schmand_light', 'frischkaese_light'];
+const BOWL_COUNT = 220;
+
+/* Kurzname eines Katalogartikels ohne Zusatz in Klammern */
+function bowlShort(id) { return CATALOG_BY_ID[id].name.split(' (')[0]; }
+
+function buildBowls() {
+  // Einfacher, deterministischer Zufallsgenerator (LCG) → immer dieselbe Auswahl
+  let seed = 20261104;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const pick = list => list[Math.floor(rnd() * list.length)];
+
+  const seen = new Set();
+  const out = [];
+  let guard = 0;
+  while (out.length < BOWL_COUNT && guard++ < 20000) {
+    const p = pick(BOWL_PROTEINS), c = pick(BOWL_CARBS), v = pick(BOWL_VEGS), s = pick(BOWL_SALADS), sauce = pick(BOWL_SAUCES);
+    const key = [p, c, v, s, sauce].join('|');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    const tags = CATALOG_BY_ID[p].tags;
+    const category = tags.includes('huhn') ? 'gefluegel'
+      : (tags.includes('fisch') ? 'fisch'
+      : (tags.includes('rind') ? 'rind' : 'tiktok'));
+    const heavy = ['kartoffel', 'drillinge', 'suesskartoffel'].includes(c);
+
+    out.push(enrichRecipe({
+      id: 'bowl_' + out.length,
+      title: `${bowlShort(p)}-Bowl mit ${bowlShort(c)}, ${bowlShort(v)} & ${bowlShort(s)}`,
+      category,
+      season: 'all',
+      prepTime: heavy ? 25 : 15,
+      components: {
+        protein: { id: p },
+        carb: { id: c, g: 100 },
+        veggie: { id: v, g: 150 },
+        salad: { id: s, g: 60 },
+        extras: [{ id: sauce, g: 40 }]
+      },
+      steps: [
+        `${bowlShort(c)} nach Packungsanleitung bzw. bis gar garen${heavy ? ' (Kartoffeln vorher in Stücke schneiden)' : ''}.`,
+        `${bowlShort(p)} würzen und in der Pfanne oder im Ofen rundum durchgaren.`,
+        `${bowlShort(v)} knackig garen oder kurz anbraten und würzen.`,
+        `${bowlShort(s)} vorbereiten, alles in der Bowl anrichten und mit ${bowlShort(sauce)} als Dip oder Dressing servieren.`
+      ],
+      custom: false,
+      bowl: true
+    }));
+  }
+  return out;
+}
+
+const BOWL_RECIPES = buildBowls();
+
+;
+/* ==========================================================================
+   pdf.js – erzeugt eine echte PDF-Datei (Helvetica, A4 quer) ohne Bibliothek.
+   Funktioniert offline, auch auf dem iPad. Lädt VOR app.js.
+   Nur Text und Linien; Umlaute und € werden als WinAnsi kodiert.
+   ========================================================================== */
+
+const PDF_WIN_MAP = {
+  '€': 0x80, '„': 0x84, '“': 0x93, '”': 0x94, '…': 0x85, '•': 0x95,
+  '–': 0x96, '—': 0x97, '‘': 0x91, '’': 0x92
+};
+
+function pdfWinBytes(str) {
+  const out = [];
+  for (const ch of String(str)) {
+    const c = ch.codePointAt(0);
+    if (c < 256) out.push(c);
+    else out.push(PDF_WIN_MAP[ch] !== undefined ? PDF_WIN_MAP[ch] : 63); // '?'
+  }
+  return out;
+}
+
+/* Textliteral als reines ASCII: Sonderzeichen oktal, Klammern und Backslash escaped */
+function pdfLiteral(str) {
+  return pdfWinBytes(str).map(b => {
+    if (b === 40 || b === 41 || b === 92) return '\\' + String.fromCharCode(b);
+    if (b < 32 || b > 126) return '\\' + b.toString(8).padStart(3, '0');
+    return String.fromCharCode(b);
+  }).join('');
+}
+
+/* pages: Array von Seiten; Seite = Array von { x, y, s (Größe), b (fett), t (Text) } */
+function buildPdf(pages, W = 842, H = 595) {
+  const objs = [];
+  const kids = pages.map((_, i) => 5 + i * 2);
+  objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objs[2] = `<< /Type /Pages /Kids [${kids.map(k => k + ' 0 R').join(' ')}] /Count ${pages.length} >>`;
+  objs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+  objs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+  pages.forEach((ops, i) => {
+    const pid = kids[i];
+    const cid = pid + 1;
+    let content = '';
+    ops.forEach(o => {
+      content += `BT /${o.b ? 'F2' : 'F1'} ${o.s || 10} Tf ${o.x.toFixed(1)} ${o.y.toFixed(1)} Td (${pdfLiteral(o.t)}) Tj ET\n`;
+    });
+    objs[pid] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cid} 0 R >>`;
+    objs[cid] = `<< /Length ${content.length} >>\nstream\n${content}endstream`;
+  });
+
+  let out = '%PDF-1.4\n';
+  const offs = [];
+  for (let i = 1; i < objs.length; i++) {
+    offs[i] = out.length;
+    out += `${i} 0 obj\n${objs[i]}\nendobj\n`;
+  }
+  const xref = out.length;
+  out += `xref\n0 ${objs.length}\n0000000000 65535 f \n`;
+  for (let i = 1; i < objs.length; i++) out += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  out += `trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return new Uint8Array(out.split('').map(c => c.charCodeAt(0)));
+}
+
+/* Bricht Text an Wortgrenzen in Zeilen von höchstens max Zeichen */
+function pdfWrap(text, max) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let cur = '';
+  words.forEach(w => {
+    if (!cur) cur = w;
+    else if ((cur + ' ' + w).length <= max) cur += ' ' + w;
+    else { lines.push(cur); cur = w; }
+  });
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
+}
+
+;
+'use strict';
+
+/* ==========================================================================
+   app.js – v6
+   Start: morgen. Sieben Tage am Stück. Pro Tag drei Vorschläge, „Neu würfeln“,
+   oder ein eigenes Gericht. Heute bleibt, wie es geplant ist.
+   Daraus abgeleitet: PDF mit Tagesplan (Gramm pro Person) + Einkaufsliste.
+   ========================================================================== */
+
+/* ----- Konstanten ----- */
+const STATE_KEY = 'mensa.v6.state';
+const WINDOW_DAYS = 7;
+const MAX_PERSONS = 5;
+const REF_PROTEIN_G = 45;
+const BUILDER_BASE_G = { carb: 100, veggie: 150, salad: 60, booster: 40 };
+const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const DAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const MONTHS = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
+const PERSON_COLORS = ['#2BB673', '#F5A524', '#5B8DEF', '#E8609A', '#8B6CEF'];
+const ABSENCE_KEYWORDS = ['weg', 'abwesend', 'geschäft', 'dienstreise', 'urlaub', 'auswärts', 'nicht da', 'reise', 'unterwegs'];
+
+const GOALS = {
+  muskel: { label: 'Muskelaufbau / High Protein', factor: 0.80 },
+  erhalt: { label: 'Normal / Erhalt', factor: 0.45 },
+  defizit: { label: 'Defizit', factor: 0.65 }
+};
+
+const LIKE_OPTIONS = [
+  { key: 'huhn', label: 'Hähnchen' }, { key: 'lachs', label: 'Lachs' }, { key: 'rind', label: 'Rinderhack' },
+  { key: 'garnele', label: 'Garnelen' }, { key: 'vegetarisch', label: 'Vegetarisch' }
+];
+
+const NOGO_OPTIONS = [
+  { key: 'pilze', label: 'Keine Pilze', test: r => r.tags.includes('pilze') },
+  { key: 'fisch', label: 'Kein Fisch / Meeresfrüchte', test: r => r.tags.includes('fisch') },
+  { key: 'schwein', label: 'Kein Schwein', test: r => r.tags.includes('schwein') },
+  { key: 'scharf', label: 'Scharf vermeiden', test: r => r.tags.includes('scharf') },
+  { key: 'weizen', label: 'Streng weizenfrei', test: r => !r.wheatFree }
+];
+
+const THEMES = [
+  { key: 'italienisch', label: '🇮🇹 Italienisch' }, { key: 'asiatisch', label: '🥢 Asiatisch' },
+  { key: 'mexikanisch', label: '🌮 Mexikanisch' }, { key: 'grill', label: '🍖 Grill' },
+  { key: 'herbst', label: '🎃 Herbst' }, { key: 'vegetarisch', label: '🥬 Vegetarisch' }
+];
+
+/* Drei Vorschläge pro Tag: je einer aus Geflügel, Fisch, Rind/TikTok */
+const SLOTS = [
+  { cats: ['gefluegel'] },
+  { cats: ['fisch'] },
+  { cats: ['rind', 'tiktok'] }
+];
+
+/* Haushalt: Mama, Papa, ich. Gewicht und Ziel bitte in den Einstellungen anpassen. */
+const DEFAULT_PERSONS = [
+  { id: 'mama', name: 'Mama', kg: 70, goal: 'erhalt', likes: [], nogos: [] },
+  { id: 'papa', name: 'Papa', kg: 70, goal: 'erhalt', likes: [], nogos: [] },
+  { id: 'ich', name: 'Ich', kg: 70, goal: 'erhalt', likes: [], nogos: [] }
+];
+
+/* ----- Zustand ----- */
+let S = null;
+let recipeCacheAll = null;
+let ui = { tab: 'plan', pickerDate: null, pickerQ: '', pickerFilter: '', pantryQ: '', offerQ: '' };
+let toastTimer = null;
+
+/* ==========================================================================
+   HILFSFUNKTIONEN & DATUM
+   ========================================================================== */
+const $ = sel => document.querySelector(sel);
+const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+function fmtN(v, digits = 0) { return Number(v).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: digits }); }
+function fmtG(v) { return `${fmtN(v, 0)} g`; }
+
+function toast(msg) {
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+function iso(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function parseISO(s) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(s, n) { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); }
+function todayISO() { return iso(new Date()); }
+function tomorrowISO() { return addDays(todayISO(), 1); }
+/* Die Planung umfasst sieben Tage ab morgen */
+function windowDates() {
+  const start = tomorrowISO();
+  return Array.from({ length: WINDOW_DAYS }, (_, i) => addDays(start, i));
+}
+function weekdayIndex(s) { return (parseISO(s).getDay() + 6) % 7; }
+function dateShort(s) {
+  const d = parseISO(s);
+  return `${DAY_SHORT[weekdayIndex(s)]} ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function dateLong(s) {
+  const d = parseISO(s);
+  return `${DAY_NAMES[weekdayIndex(s)]}, ${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function windowLabel() {
+  const w = windowDates();
+  return `${dateShort(w[0])} – ${dateShort(w[w.length - 1])}`;
+}
+function initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+function personColor(idx) { return PERSON_COLORS[idx % PERSON_COLORS.length]; }
+
+/* ==========================================================================
+   ZUSTAND
+   ========================================================================== */
+function sanitizePerson(p) {
+  return {
+    id: String(p.id),
+    name: String(p.name || 'Person').slice(0, 30),
+    kg: clamp(Number(p.kg) || 70, 30, 250),
+    goal: GOALS[p.goal] ? p.goal : 'erhalt',
+    likes: (p.likes || []).filter(k => LIKE_OPTIONS.some(o => o.key === k)),
+    nogos: (p.nogos || []).filter(k => NOGO_OPTIONS.some(o => o.key === k))
+  };
+}
+
+function newDay() { return { recipeId: null, custom: null, absent: [], options: [] }; }
+
+function defaultState() {
+  return {
+    persons: DEFAULT_PERSONS.map(sanitizePerson),
+    days: {},
+    pantry: {},
+    offers: [],
+    calendar: { importedAt: null, events: [] },
+    shopChecked: {},
+    shopExtras: [],
+    savedWindow: null
+  };
+}
+
+/* Woche gespeichert = gespeichertes Fenster beginnt noch am heutigen Startdatum */
+function isSaved() {
+  return !!(S.savedWindow && S.savedWindow.start === windowDates()[0]);
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+    if (s && Array.isArray(s.persons) && s.days) return { ...defaultState(), ...s };
+  } catch (e) { /* Standard verwenden */ }
+  return defaultState();
+}
+
+function save() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(S)); }
+  catch (e) { toast('Speichern im Browser nicht möglich.'); }
+}
+
+/* Hält das Fenster aktuell: vergangene Tage fliegen raus, neue Tage bekommen Vorschläge */
+function syncWindow() {
+  const today = todayISO();
+  Object.keys(S.days).forEach(d => { if (d < today) delete S.days[d]; });
+  if (!S.days[today]) S.days[today] = newDay();
+  windowDates().forEach(d => {
+    if (!S.days[d]) S.days[d] = newDay();
+    const day = S.days[d];
+    if (!day.recipeId && !day.custom && (!day.options || day.options.length === 0)) {
+      day.options = generateOptions(d, []);
+    }
+  });
+}
+
+/* ==========================================================================
+   REZEPTE
+   ========================================================================== */
+function themesOf(r) {
+  const t = [];
+  const x = r.title;
+  if (/Pasta|Penne|Italien|Pesto|Mozzarella|Caprese|Risotto|Lasagne|Pizza/i.test(x)) t.push('italienisch');
+  if (/Asia|Wok|Teriyaki|Curry|Sriracha|Sojasprossen/i.test(x)) t.push('asiatisch');
+  if (/Mexi|Burrito|Taco|Fajita|Wraps|Salsa/i.test(x)) t.push('mexikanisch');
+  if (/Grill|Souvlaki/i.test(x)) t.push('grill');
+  if (/Herbst|Kürbis/i.test(x)) t.push('herbst');
+  if (r.proteinTags.includes('vegetarisch')) t.push('vegetarisch');
+  return t;
+}
+
+function allRecipes() {
+  if (!recipeCacheAll) recipeCacheAll = [...getAllRecipes(), ...BOWL_RECIPES].map(r => ({ ...r, themes: themesOf(r) }));
+  return recipeCacheAll;
+}
+function invalidate() { recipeCacheAll = null; }
+function recipeById(id) { return allRecipes().find(r => r.id === id) || null; }
+
+function dayRecipe(day) {
+  if (!day) return null;
+  if (day.custom) {
+    const e = enrichRecipe(day.custom);
+    return { ...e, themes: themesOf(e) };
+  }
+  return day.recipeId ? recipeById(day.recipeId) : null;
+}
+
+/* ==========================================================================
+   KALENDER & ANWESENHEIT
+   ========================================================================== */
+function isAbsenceFor(summary, name) {
+  const s = summary.toLowerCase();
+  return s.includes(name.toLowerCase()) && ABSENCE_KEYWORDS.some(k => s.includes(k));
+}
+
+function calAbsentIds(date) {
+  const ids = new Set();
+  S.calendar.events.forEach(ev => {
+    if (ev.from <= date && date <= ev.to) {
+      S.persons.forEach(p => { if (isAbsenceFor(ev.summary, p.name)) ids.add(p.id); });
+    }
+  });
+  return ids;
+}
+
+function absentSet(date) {
+  const ids = calAbsentIds(date);
+  ((S.days[date] && S.days[date].absent) || []).forEach(id => ids.add(id));
+  return ids;
+}
+
+function presentPersons(date) {
+  const ab = absentSet(date);
+  return S.persons.filter(p => !ab.has(p.id));
+}
+
+function calHits() {
+  const hits = [];
+  windowDates().forEach(date => {
+    S.calendar.events.forEach(ev => {
+      if (ev.from <= date && date <= ev.to) {
+        S.persons.forEach(p => { if (isAbsenceFor(ev.summary, p.name)) hits.push({ date, person: p.name, summary: ev.summary }); });
+      }
+    });
+  });
+  return hits;
+}
+
+function icsDate(v) {
+  const m = v.match(/^(\d{4})(\d{2})(\d{2})/);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+}
+
+function parseICS(text) {
+  const lines = text.replace(/\r/g, '').replace(/\n[ \t]/g, '').split('\n');
+  const raw = [];
+  let cur = null;
+  lines.forEach(line => {
+    if (line === 'BEGIN:VEVENT') { cur = {}; return; }
+    if (line === 'END:VEVENT') { if (cur && cur.from) raw.push(cur); cur = null; return; }
+    if (!cur) return;
+    const idx = line.indexOf(':');
+    if (idx < 0) return;
+    const key = line.slice(0, idx).split(';')[0].toUpperCase();
+    const val = line.slice(idx + 1);
+    if (key === 'SUMMARY') cur.summary = val.replace(/\\,/g, ',').replace(/\\;/g, ';');
+    if (key === 'DTSTART') { cur.from = icsDate(val); cur.allDay = !val.includes('T'); }
+    if (key === 'DTEND') cur.end = icsDate(val);
+  });
+  const today = todayISO();
+  return raw.filter(e => e.from).map(e => {
+    let to = e.end || e.from;
+    if (e.allDay && e.end) to = addDays(e.end, -1);
+    if (to < e.from) to = e.from;
+    return { from: e.from, to, summary: e.summary || '' };
+  }).filter(e => e.to >= addDays(today, -1) && e.from <= addDays(today, 400));
+}
+
+/* ==========================================================================
+   MAKRO-ALGORITHMUS
+   Protein-Ziel = Körpergewicht × Faktor (Hauptmahlzeit). Hauptprotein exakt auf
+   das Ziel; übrige Komponenten skalieren mit (Ziel ÷ 45 g).
+   ========================================================================== */
+function proteinTarget(p) { return p.kg * GOALS[p.goal].factor; }
+function personScale(p) { return proteinTarget(p) / REF_PROTEIN_G; }
+
+function portionFor(recipe, p) {
+  const scale = personScale(p);
+  const protein = CATALOG_BY_ID[recipe.components.protein.id];
+  const out = [{ role: 'protein', item: protein, grams: Math.round(proteinTarget(p) / protein.protein * 100) }];
+  const add = (role, comp) => out.push({ role, item: CATALOG_BY_ID[comp.id], grams: Math.round(comp.g * scale) });
+  add('carb', recipe.components.carb);
+  add('veggie', recipe.components.veggie);
+  add('salad', recipe.components.salad);
+  recipe.components.extras.forEach(e => add('extra', e));
+  return out;
+}
+
+function sumMacros(portion) {
+  return portion.reduce((acc, x) => {
+    const f = x.grams / 100;
+    acc.grams += x.grams;
+    acc.kcal += x.item.kcal * f;
+    acc.protein += x.item.protein * f;
+    return acc;
+  }, { grams: 0, kcal: 0, protein: 0 });
+}
+
+/* Tageswerte – nur für anwesende Personen */
+function dayTotals(date) {
+  const recipe = dayRecipe(S.days[date]);
+  const present = presentPersons(date);
+  const t = { recipe, present, grams: 0, protein: 0, target: 0, lines: {}, portions: [] };
+  if (!recipe) return t;
+  present.forEach(p => {
+    const port = portionFor(recipe, p);
+    const m = sumMacros(port);
+    t.grams += m.grams;
+    t.protein += m.protein;
+    t.target += proteinTarget(p);
+    port.forEach(x => { t.lines[x.item.id] = (t.lines[x.item.id] || 0) + x.grams; });
+    t.portions.push({ person: p, port });
+  });
+  return t;
+}
+
+function conflictsFor(recipe, list) {
+  const out = [];
+  list.forEach(p => p.nogos.forEach(k => {
+    const opt = NOGO_OPTIONS.find(o => o.key === k);
+    if (opt && opt.test(recipe)) out.push({ name: p.name, label: opt.label });
+  }));
+  return out;
+}
+
+/* ==========================================================================
+   DREI VORSCHLÄGE PRO TAG
+   Vermeidet Wiederholungen im Fenster, achtet auf Proteinvielfalt,
+   bevorzugt Angebote und Vorrat, meidet Unverträglichkeiten.
+   ========================================================================== */
+function windowUsage(exceptDate) {
+  const used = new Set();
+  const prot = {};
+  windowDates().forEach(d => {
+    if (d === exceptDate || !S.days[d]) return;
+    const day = S.days[d];
+    (day.options || []).forEach(id => used.add(id));
+    if (day.recipeId) used.add(day.recipeId);
+    const r = dayRecipe(day);
+    if (r) prot[r.components.protein.id] = (prot[r.components.protein.id] || 0) + 1;
+  });
+  return { used, prot };
+}
+
+function generateOptions(date, exclude) {
+  const { used, prot } = windowUsage(date);
+  const present = presentPersons(date);
+  const pool = allRecipes().filter(r => !r.custom);
+  const picked = [];
+  SLOTS.forEach(slot => {
+    const cands = pool.filter(r => slot.cats.includes(r.category) && !exclude.includes(r.id) && !picked.includes(r.id));
+    const scored = cands.map(r => {
+      const pr = r.components.protein.id;
+      const s =
+        -conflictsFor(r, present).length * 6 -
+        (used.has(r.id) ? 4 : 0) -
+        (prot[pr] || 0) * 2 +
+        (r.uses.some(id => S.offers.includes(id)) ? 1.5 : 0) +
+        (r.uses.some(id => (S.pantry[id] || 0) >= 100) ? 1 : 0) +
+        Math.random() * 0.8;
+      return { r, s };
+    }).sort((a, b) => b.s - a.s);
+    if (scored[0]) picked.push(scored[0].r.id);
+  });
+  return picked;
+}
+
+/* ==========================================================================
+   EINKAUF – für das ganze Fenster, Vorrat abgezogen
+   ========================================================================== */
+function shopping() {
+  const totals = {};
+  const perDay = [];
+  windowDates().forEach(d => {
+    const t = dayTotals(d);
+    perDay.push({ date: d, ...t });
+    Object.entries(t.lines).forEach(([id, g]) => { totals[id] = (totals[id] || 0) + g; });
+  });
+  const deptOrder = Object.fromEntries(DEPARTMENTS.map(d => [d.key, d.order]));
+  const lines = Object.entries(totals).map(([id, grams]) => {
+    const item = CATALOG_BY_ID[id];
+    const stock = S.pantry[id] || 0;
+    const net = Math.max(0, grams - stock);
+    const packs = net > 0 ? Math.ceil(net / item.packG) : 0;
+    return { id, item, grams, stock, net, packs };
+  }).filter(l => l.net > 0);
+  lines.sort((a, b) => (deptOrder[a.item.dept] - deptOrder[b.item.dept]) || a.item.name.localeCompare(b.item.name, 'de'));
+  return { lines, perDay };
+}
+
+/* ==========================================================================
+   RENDERING
+   ========================================================================== */
+const TAB_TITLES = { plan: 'Wochenplan', einkauf: 'Einkauf', mehr: 'Einstellungen' };
+
+function render() {
+  syncWindow();
+  $('#topbar-title').textContent = TAB_TITLES[ui.tab];
+  $('#topbar-sub').textContent = ui.tab === 'plan' ? `Planung ab morgen · ${windowLabel()}` : (ui.tab === 'einkauf' ? `Einkauf für ${windowLabel()}` : '');
+  $('#view').innerHTML = ui.tab === 'plan' ? viewPlan() : ui.tab === 'einkauf' ? viewEinkauf() : viewMehr();
+  if (ui.tab === 'mehr') { renderOfferResults(); renderPantryResults(); }
+  document.querySelectorAll('[data-tab-btn]').forEach(b => b.classList.toggle('active', b.dataset.tabBtn === ui.tab));
+  save();
+}
+
+/* ----- 1. Wochenplan ----- */
+function viewPlan() {
+  const today = todayISO();
+  const todayRecipe = dayRecipe(S.days[today]);
+  const todayBlock = `
+    <section class="card today">
+      <p class="eyebrow">Heute · ${esc(dateLong(today))}</p>
+      ${todayRecipe
+        ? `<p class="meal-title">${esc(todayRecipe.title)}</p><p class="small muted">Schon geplant – bleibt so.</p>`
+        : `<p class="muted small">Heute ist noch nichts eingetragen.</p>
+           <div class="row wrap mt"><button class="btn small-btn" data-action="pickFor" data-date="${today}">Heute eintragen</button></div>`}
+    </section>`;
+  const dates = windowDates();
+  const planned = dates.filter(d => dayRecipe(S.days[d])).length;
+  const hits = calHits();
+  const saved = isSaved();
+
+  return `
+    <div class="stack">
+      ${todayBlock}
+      ${saved ? `<section class="card hero"><p class="eyebrow">✅ Gespeichert</p><p class="small">Woche ${esc(windowLabel())} gespeichert am ${new Date(S.savedWindow.savedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}. Pro Tag steht ein Gericht.</p><div class="row wrap mt"><button class="btn small-btn" data-action="unlockWeek">🔓 Woche ändern</button></div></section>` : ''}
+      <p class="small muted">${planned} von ${WINDOW_DAYS} Tagen geplant. Pro Tag drei Vorschläge – wähle einen oder würfle neu.</p>
+      <div class="stack">${dates.map(d => dayCard(d)).join('')}</div>
+      ${hits.length ? `<section class="card">
+        <p class="eyebrow">Kalender-Treffer</p>
+        <div class="stack-sm">${hits.map(h => `<p class="small"><b>${esc(dateShort(h.date))}</b> · ${esc(h.person)} – ${esc(h.summary)}</p>`).join('')}</div>
+      </section>` : ''}
+      <section class="card actions">
+        ${saved ? '' : '<button class="btn primary" data-action="saveWeek">💾 Woche speichern & PDF</button>'}
+        <button class="btn ${saved ? 'primary' : ''}" data-action="exportPdf">📄 PDF herunterladen</button>
+        <p class="small muted">Das PDF enthält pro Tag das gewählte Gericht mit Gramm pro Person und darunter die Einkaufsliste für die ganze Woche.</p>
+      </section>
+    </div>`;
+}
+
+function dayCard(date) {
+  const day = S.days[date];
+  const r = dayRecipe(day);
+  const present = presentPersons(date);
+  const ab = absentSet(date);
+  const cal = calAbsentIds(date);
+  const people = S.persons.map((p, idx) => {
+    const off = ab.has(p.id);
+    return `<button class="pchip ${off ? 'off' : ''}" style="--c:${personColor(idx)}" data-action="presence" data-date="${date}" data-person="${esc(p.id)}">
+      <span class="av">${esc(initials(p.name))}</span>${off ? '✕ nicht da' : 'dabei'}${cal.has(p.id) ? ' 📅' : ''}
+    </button>`;
+  }).join('');
+
+  let body;
+  if (isSaved()) {
+    body = r
+      ? mealCard(date, r, true) + '<p class="small muted">Kochtopf ' + fmtG(dayTotals(date).grams) + ' · Protein ' + fmtN(dayTotals(date).protein, 0) + ' g</p>'
+      : '<p class="muted small">Kein Gericht an diesem Tag.</p>';
+  } else if (r) {
+    const conf = conflictsFor(r, present);
+    const t = dayTotals(date);
+    body = `
+      ${mealCard(date, r, true)}
+      <p class="small muted">Kochtopf ${fmtG(t.grams)} · Protein ${fmtN(t.protein, 0)} g${conf.length ? ` · <span class="warn-inline">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}</p>
+      <div class="row wrap">
+        <button class="btn small-btn" data-action="change" data-date="${date}">Gericht ändern</button>
+        <button class="btn small-btn" data-action="pickFor" data-date="${date}">Anderes suchen</button>
+      </div>`;
+  } else if (day && day.custom) {
+    body = mealCard(date, enrichRecipe(day.custom), true);
+  } else {
+    const opts = (day.options || []).map(id => recipeById(id)).filter(Boolean);
+    body = `
+      <div class="meals">${opts.map((o, j) => mealCard(date, o, false, ['Geflügel', 'Fisch', 'Rind / TikTok'][j])).join('')}</div>
+      <div class="row wrap">
+        <button class="btn small-btn" data-action="reroll" data-date="${date}">🎲 Neu würfeln</button>
+        <button class="btn small-btn" data-action="pickFor" data-date="${date}">🔍 Anderes suchen</button>
+        <button class="btn small-btn" data-action="builder" data-date="${date}">🛠️ Eigenes bauen</button>
+      </div>`;
+  }
+
+  return `
+    <article class="card dayrow">
+      <div class="dayhead">
+        <div class="daydate"><span class="dshort">${DAY_SHORT[weekdayIndex(date)]}</span><b>${parseISO(date).getDate()}.</b></div>
+        <div class="grow"><b>${esc(dateLong(date))}</b>${r ? '' : '<span class="small muted block">noch nicht gewählt</span>'}</div>
+      </div>
+      <div class="pchips">${people}</div>
+      ${body}
+    </article>`;
+}
+
+function mealCard(date, r, selected, slotLabel) {
+  const veg = r.proteinTags.includes('vegetarisch');
+  const action = selected ? '' : `data-action="choose" data-date="${date}" data-recipe="${esc(r.id)}"`;
+  return `
+    <div class="meal ${selected ? 'sel' : ''}">
+      <button class="meal-main" ${action}>
+        ${slotLabel ? `<span class="slot">${esc(slotLabel)}</span>` : ''}
+        <span class="meal-title">${esc(r.title)}</span>
+        <span class="tags">
+          <span class="tag">⏱ ${r.prepTime} Min</span>
+          ${veg ? '<span class="tag green">🥬 vegetarisch</span>' : ''}
+          ${r.bowl ? '<span class="tag">🥗 Bowl</span>' : ''}
+          ${r.uses.some(u => S.offers.includes(u)) ? '<span class="tag orange">🏷️ Angebot</span>' : ''}
+        </span>
+      </button>
+      ${selected ? '<span class="check">✓</span>' : ''}
+    </div>`;
+}
+
+/* ----- 2. Einkauf ----- */
+function viewEinkauf() {
+  const { lines, perDay } = shopping();
+  const planned = perDay.filter(d => d.recipe).length;
+  const done = lines.filter(l => S.shopChecked['c:' + l.id]).length;
+  const groups = DEPARTMENTS.filter(d => d.key !== 'extra').map(d => {
+    const items = lines.filter(l => l.item.dept === d.key);
+    if (!items.length) return '';
+    return `<p class="eyebrow dept">${esc(d.label)}</p>
+      <div class="card list">${items.map(l => `
+        <label class="row-item ${S.shopChecked['c:' + l.id] ? 'done' : ''}">
+          <input type="checkbox" data-field="checked" data-key="c:${esc(l.id)}" ${S.shopChecked['c:' + l.id] ? 'checked' : ''}>
+          <span class="grow"><b>${esc(l.item.name)}</b>
+            <span class="small muted block">${fmtG(l.net)} benötigt${l.stock ? ` · ${fmtG(l.stock)} aus dem Vorrat abgezogen` : ''}</span></span>
+          <span class="pack">${l.packs}× ${esc(l.item.packLabel)}</span>
+        </label>`).join('')}</div>`;
+  }).join('');
+  const extras = S.shopExtras.map(e => `
+    <label class="row-item ${S.shopChecked['x:' + e.id] ? 'done' : ''}">
+      <input type="checkbox" data-field="checked" data-key="x:${esc(e.id)}" ${S.shopChecked['x:' + e.id] ? 'checked' : ''}>
+      <span class="grow">${esc(e.text)}</span>
+      <button class="link danger" data-action="removeExtra" data-id="${esc(e.id)}" type="button">✕</button>
+    </label>`).join('');
+  return `
+    <div class="stack">
+      <section class="card hero">
+        <p class="eyebrow">Für die ganze Woche</p>
+        <h2>${lines.length ? `${lines.length} Artikel` : 'Nichts einzukaufen'}</h2>
+        <p class="muted small">${planned} von ${WINDOW_DAYS} Tagen geplant · ${done} von ${lines.length} erledigt · Vorrat ist abgezogen</p>
+        <div class="bar"><span style="width:${lines.length ? (done / lines.length * 100).toFixed(0) : 0}%"></span></div>
+      </section>
+      ${groups || '<p class="muted">Noch keine Gerichte gewählt – oder der Vorrat deckt alles ab.</p>'}
+      <p class="eyebrow dept">Zusatzwünsche</p>
+      <div class="card list">${extras || '<p class="muted small pad">Noch keine.</p>'}
+        <form id="extra-form" class="row pad">
+          <input class="input grow" name="text" maxlength="80" placeholder="z. B. Protein-Pudding, Küchenrolle" required>
+          <button class="btn primary small-btn" type="submit">+</button>
+        </form>
+      </div>
+      <button class="btn" data-action="exportPdf">📄 PDF: Tagesplan & Einkaufsliste</button>
+    </div>`;
+}
+
+/* ----- 3. Einstellungen ----- */
+function viewMehr() {
+  const people = S.persons.map((p, idx) => `
+    <section class="card person">
+      <div class="row between">
+        <span class="av big" style="--c:${personColor(idx)}">${esc(initials(p.name))}</span>
+        <input class="input grow name" value="${esc(p.name)}" maxlength="30" data-person="${esc(p.id)}" data-field="name" aria-label="Name">
+        ${S.persons.length > 1 ? `<button class="link danger" data-action="removePerson" data-person="${esc(p.id)}">Entfernen</button>` : ''}
+      </div>
+      <div class="grid2">
+        <label class="field">Gewicht (kg)<input class="input" type="number" min="30" max="250" value="${p.kg}" data-person="${esc(p.id)}" data-field="kg"></label>
+        <label class="field">Ziel<select class="input" data-person="${esc(p.id)}" data-field="goal">
+          ${Object.entries(GOALS).map(([k, g]) => `<option value="${k}" ${p.goal === k ? 'selected' : ''}>${esc(g.label)}</option>`).join('')}
+        </select></label>
+      </div>
+      <p class="small muted">Protein-Ziel pro Hauptmahlzeit: <b>${fmtN(proteinTarget(p), 0)} g</b></p>
+      <span class="label">Lieblings-Proteine</span>
+      <div class="chips">${LIKE_OPTIONS.map(o => `<button class="chip ${p.likes.includes(o.key) ? 'on' : ''}" data-action="pref" data-kind="like" data-person="${esc(p.id)}" data-value="${o.key}">${o.label}</button>`).join('')}</div>
+      <span class="label">No-Gos / Allergien</span>
+      <div class="chips">${NOGO_OPTIONS.map(o => `<button class="chip nogo ${p.nogos.includes(o.key) ? 'on' : ''}" data-action="pref" data-kind="nogo" data-person="${esc(p.id)}" data-value="${o.key}">${o.label}</button>`).join('')}</div>
+    </section>`).join('');
+
+  const pantryRows = Object.entries(S.pantry).filter(([, g]) => g > 0).map(([id, g]) => {
+    const it = CATALOG_BY_ID[id];
+    return it ? `<div class="row-item">
+      <span class="grow"><b>${esc(it.name)}</b></span>
+      <button class="step" data-action="pantryStep" data-id="${esc(id)}" data-value="-100">−</button>
+      <input class="input g-input" type="number" min="0" step="10" value="${g}" data-field="pantry-g" data-id="${esc(id)}" aria-label="Gramm">
+      <button class="step" data-action="pantryStep" data-id="${esc(id)}" data-value="100">+</button>
+    </div>` : '';
+  }).join('');
+
+  const offerChips = S.offers.map(id => `<button class="chip on" data-action="offer" data-id="${esc(id)}">🏷️ ${esc(CATALOG_BY_ID[id].name)} ✕</button>`).join('');
+  const ev = S.calendar.events.length;
+
+  return `
+    <div class="stack">
+      <p class="eyebrow dept">Personen</p>
+      ${people}
+      ${S.persons.length < MAX_PERSONS ? `<button class="btn" data-action="addPerson">+ Person hinzufügen</button>` : ''}
+
+      <p class="eyebrow dept">Vorrat – was ist noch da?</p>
+      <section class="card">
+        <input id="pantry-search" class="input" type="search" placeholder="Zutat suchen und hinzufügen …" value="${esc(ui.pantryQ)}">
+        <div id="pantry-results" class="stack-sm mt"></div>
+      </section>
+      ${pantryRows ? `<div class="card list">${pantryRows}</div>` : ''}
+
+      <p class="eyebrow dept">Kalender</p>
+      <section class="card">
+        <p class="small">Kalender als .ics exportieren und hier importieren. Termine mit einem Personennamen und einem Wort wie <i>weg, Geschäft, Dienstreise, Urlaub, auswärts</i> markieren die Person als abwesend.</p>
+        <p class="small muted mt">${ev ? `${ev} Termine · Stand ${new Date(S.calendar.importedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}` : 'Noch kein Kalender importiert.'}</p>
+        <label class="btn file-btn mt">📅 Kalender-Datei wählen
+          <input type="file" accept=".ics,text/calendar" data-field="ics" hidden>
+        </label>
+        ${ev ? `<button class="btn mt" data-action="calClear">Kalender entfernen</button>` : ''}
+      </section>
+
+      <p class="eyebrow dept">Lidl-Angebote diese Woche</p>
+      <section class="card">
+        <p class="small muted">Angebote werden bei den Vorschlägen bevorzugt. Bitte selbst aus dem Prospekt eintragen.</p>
+        <input id="offer-search" class="input" type="search" placeholder="Artikel suchen …" value="${esc(ui.offerQ)}">
+        <div class="chips mt">${offerChips}</div>
+        <div id="offer-results" class="stack-sm mt"></div>
+      </section>
+
+      <p class="eyebrow dept">Datenbank</p>
+      <section class="card">
+        <p class="small">Alles (Personen, Plan, Vorrat, eigene Rezepte) als Datei sichern oder auf ein anderes Gerät laden.</p>
+        <div class="stack-sm mt">
+          <button class="btn primary" data-action="exportDb">⬇️ Datenbank exportieren</button>
+          <label class="btn file-btn">⬆️ Datenbank importieren<input type="file" accept=".json,application/json" data-field="dbimport" hidden></label>
+        </div>
+      </section>
+
+      <button class="btn danger-soft" data-action="reset">Alle Daten auf diesem Gerät löschen</button>
+    </div>`;
+}
+
+function renderPantryResults() {
+  const box = $('#pantry-results');
+  if (!box) return;
+  const q = ui.pantryQ.trim().toLowerCase();
+  if (!q) { box.innerHTML = ''; return; }
+  const hits = LIDL_CATALOG.filter(i => i.name.toLowerCase().includes(q)).slice(0, 12);
+  box.innerHTML = hits.length ? `<div class="card list">${hits.map(it => `
+    <div class="row-item">
+      <span class="grow"><b>${esc(it.name)}</b><span class="small muted block">${esc(it.packLabel)}</span></span>
+      <button class="btn small-btn" data-action="pantryAdd" data-id="${esc(it.id)}">${S.pantry[it.id] ? '✓ drin' : '+'}</button>
+    </div>`).join('')}</div>` : '<p class="muted small">Keine Treffer.</p>';
+}
+
+function renderOfferResults() {
+  const box = $('#offer-results');
+  if (!box) return;
+  const q = ui.offerQ.trim().toLowerCase();
+  if (!q) { box.innerHTML = ''; return; }
+  const hits = LIDL_CATALOG.filter(i => i.name.toLowerCase().includes(q)).slice(0, 15);
+  box.innerHTML = `<div class="card list">${hits.map(i => `
+    <button class="row-item" data-action="offer" data-id="${esc(i.id)}">
+      <span class="grow">${esc(i.name)}</span>
+      <span class="small muted">${S.offers.includes(i.id) ? '✓ Angebot' : '+ Angebot'}</span>
+    </button>`).join('')}</div>`;
+}
+
+/* ==========================================================================
+   MODALE: Auswahl, Baukasten, eigenes Rezept
+   ========================================================================== */
+function openModal(title, html) {
+  $('#modal-title').textContent = title;
+  $('#modal-body').innerHTML = html;
+  $('#modal').classList.remove('hidden');
+}
+function closeModal() { $('#modal').classList.add('hidden'); ui.pickerDate = null; }
+
+function openPicker(date) {
+  ui.pickerDate = date;
+  ui.pickerQ = '';
+  ui.pickerFilter = '';
+  renderPicker();
+  $('#modal').classList.remove('hidden');
+}
+
+function renderPicker() {
+  const date = ui.pickerDate;
+  if (!date) return;
+  const filters = [
+    { key: '', label: 'Alle' },
+    ...Object.entries(RECIPE_CATEGORIES).map(([k, l]) => ({ key: 'cat:' + k, label: l })),
+    { key: 'bowl', label: '🥗 Bowls' },
+    ...THEMES.map(t => ({ key: 'th:' + t.key, label: t.label }))
+  ];
+  openModal(`Gericht für ${dateLong(date)}`, `
+    <div class="stack">
+      <input id="picker-search" class="input" type="search" placeholder="Gericht oder Zutat suchen …" value="${esc(ui.pickerQ)}">
+      <div class="chips">${filters.map(f => `<button class="chip ${ui.pickerFilter === f.key ? 'on' : ''}" data-action="pfilter" data-value="${f.key}">${f.label}</button>`).join('')}</div>
+      <div id="picker-list" class="card list"></div>
+      <div class="stack-sm">
+        <button class="btn" data-action="builder" data-date="${date}">🛠️ Eigenes Gericht aus Bausteinen bauen</button>
+        <button class="btn" data-action="vaultForm">+ Neues Rezept anlegen</button>
+      </div>
+    </div>`);
+  renderPickerList();
+}
+
+function renderPickerList() {
+  const date = ui.pickerDate;
+  const box = $('#picker-list');
+  if (!box || !date) return;
+  const present = presentPersons(date);
+  const q = ui.pickerQ.trim().toLowerCase();
+  const list = allRecipes()
+    .filter(r => !r.custom)
+    .filter(r => {
+      const f = ui.pickerFilter;
+      if (!f) return true;
+      if (f === 'bowl') return !!r.bowl;
+      if (f.startsWith('cat:')) return r.category === f.slice(4);
+      return r.themes.includes(f.slice(3));
+    })
+    .filter(r => !q || r.title.toLowerCase().includes(q) || r.uses.some(id => CATALOG_BY_ID[id].name.toLowerCase().includes(q)))
+    .map(r => ({ r, conf: conflictsFor(r, present) }))
+    .sort((a, b) => (a.conf.length - b.conf.length) || a.r.title.localeCompare(b.r.title, 'de'))
+    .slice(0, 80);
+  box.innerHTML = list.map(({ r, conf }) => `
+    <button class="row-item" data-action="choose" data-date="${date}" data-recipe="${esc(r.id)}">
+      <span class="grow">
+        <b>${esc(r.title)}</b>
+        <span class="small muted block">⏱ ${r.prepTime} Min · ${esc(RECIPE_CATEGORIES[r.category])}${r.wheatFree ? ' · 🌾 weizenfrei' : ''}${r.bowl ? ' · 🥗 Bowl' : ''}</span>
+        ${conf.length ? `<span class="warn-inline block">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}
+      </span>
+    </button>`).join('') || '<p class="pad muted small">Keine Treffer.</p>';
+}
+
+function optionsFor(role, allowEmpty = false, selected = '') {
+  const list = LIDL_CATALOG.filter(i => i.roles.includes(role));
+  const empty = allowEmpty ? '<option value="">— keiner —</option>' : '';
+  return empty + list.map(i => `<option value="${i.id}" ${i.id === selected ? 'selected' : ''}>${esc(i.name)}${i.brand ? ' (' + esc(i.brand) + ')' : ''}</option>`).join('');
+}
+
+function openBuilder(date) {
+  openModal('Gericht aus Bausteinen', `
+    <form id="builder-form" class="form" data-date="${date}">
+      <label class="field">Name<input class="input" name="title" value="Mein Gericht" maxlength="80" required></label>
+      <label class="field">1 · Protein<select class="input" name="protein" required>${optionsFor('protein', false, 'huhn_innen')}</select></label>
+      <label class="field">2 · Kohlenhydrat<select class="input" name="carb" required>${optionsFor('carb', false, 'reis')}</select></label>
+      <label class="field">3 · Gemüse<select class="input" name="veggie" required>${optionsFor('veggie', false, 'brokkoli')}</select></label>
+      <label class="field">4 · Salat<select class="input" name="salad" required>${optionsFor('salad', false, 'feldsalat')}</select></label>
+      <label class="field">5 · Booster (optional)<select class="input" name="booster">${optionsFor('extra', true, 'skyr')}</select></label>
+      <label class="check"><input type="checkbox" name="save"> Zusätzlich im Rezept-Archiv speichern</label>
+      <button class="btn primary" type="submit">Für diesen Tag übernehmen</button>
+    </form>`);
+}
+
+function categoryForProtein(pid) {
+  const tags = CATALOG_BY_ID[pid].tags;
+  if (tags.includes('huhn')) return 'gefluegel';
+  if (tags.includes('fisch')) return 'fisch';
+  if (tags.includes('vegetarisch')) return 'tiktok';
+  return 'rind';
+}
+
+function submitBuilder(form) {
+  const date = form.dataset.date;
+  const f = new FormData(form);
+  const pid = String(f.get('protein')), cid = String(f.get('carb')), vid = String(f.get('veggie')), sid = String(f.get('salad'));
+  const bid = String(f.get('booster') || '');
+  const recipe = {
+    id: 'c_' + Date.now(),
+    title: String(f.get('title') || '').trim().slice(0, 80) || 'Mein Gericht',
+    category: categoryForProtein(pid),
+    season: 'all',
+    prepTime: 20,
+    components: {
+      protein: { id: pid },
+      carb: { id: cid, g: BUILDER_BASE_G.carb },
+      veggie: { id: vid, g: BUILDER_BASE_G.veggie },
+      salad: { id: sid, g: BUILDER_BASE_G.salad },
+      extras: bid ? [{ id: bid, g: BUILDER_BASE_G.booster }] : []
+    },
+    steps: [
+      `${CATALOG_BY_ID[pid].name} würzen und rundum durchgaren.`,
+      `${CATALOG_BY_ID[cid].name} nach Packungsanleitung zubereiten.`,
+      `${CATALOG_BY_ID[vid].name} knackig garen oder backen.`,
+      `${CATALOG_BY_ID[sid].name} anrichten${bid ? ' und ' + CATALOG_BY_ID[bid].name + ' dazugeben' : ''}.`
+    ],
+    custom: true
+  };
+  const day = S.days[date];
+  day.custom = recipe;
+  day.recipeId = null;
+  if (f.get('save') && saveCustomRecipe(recipe)) invalidate();
+  closeModal();
+  render();
+}
+
+function openVaultForm() {
+  openModal('Neues Rezept', `
+    <form id="vault-form" class="form">
+      <label class="field">Titel<input class="input" name="title" required maxlength="80"></label>
+      <div class="grid2">
+        <label class="field">Kategorie<select class="input" name="category">${Object.entries(RECIPE_CATEGORIES).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></label>
+        <label class="field">Saison<select class="input" name="season">${Object.entries(RECIPE_SEASONS).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select></label>
+      </div>
+      <label class="field">Zubereitungszeit (Min.)<input class="input" type="number" name="prep" min="1" max="300" value="20"></label>
+      <div class="grid2">
+        <label class="field">Protein<select class="input" name="protein" required>${optionsFor('protein')}</select></label>
+        <label class="field">Kohlenhydrat<select class="input" name="carb" required>${optionsFor('carb')}</select></label>
+        <label class="field">Gemüse<select class="input" name="veggie" required>${optionsFor('veggie')}</select></label>
+        <label class="field">Salat<select class="input" name="salad" required>${optionsFor('salad')}</select></label>
+        <label class="field">Booster (optional)<select class="input" name="booster">${optionsFor('extra', true)}</select></label>
+      </div>
+      <label class="field">Zubereitungsschritte (ein Schritt pro Zeile)<textarea class="input" name="steps" rows="4"></textarea></label>
+      <button class="btn primary" type="submit">Speichern</button>
+    </form>`);
+}
+
+function submitVault(form) {
+  const f = new FormData(form);
+  const title = String(f.get('title') || '').trim().slice(0, 80);
+  if (!title) return toast('Bitte einen Titel eingeben.');
+  const steps = String(f.get('steps') || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 10);
+  const booster = String(f.get('booster') || '');
+  const recipe = {
+    id: 'c_' + Date.now(),
+    title,
+    category: String(f.get('category')),
+    season: String(f.get('season')),
+    prepTime: clamp(Number(f.get('prep')) || 20, 1, 300),
+    components: {
+      protein: { id: String(f.get('protein')) },
+      carb: { id: String(f.get('carb')), g: BUILDER_BASE_G.carb },
+      veggie: { id: String(f.get('veggie')), g: BUILDER_BASE_G.veggie },
+      salad: { id: String(f.get('salad')), g: BUILDER_BASE_G.salad },
+      extras: booster ? [{ id: booster, g: BUILDER_BASE_G.booster }] : []
+    },
+    steps: steps.length ? steps : ['Nach Belieben zubereiten.'],
+    custom: true
+  };
+  if (!saveCustomRecipe(recipe)) return toast('Konnte nicht gespeichert werden.');
+  invalidate();
+  closeModal();
+  toast('Rezept gespeichert – im Auswahl-Fenster verfügbar.');
+  render();
+}
+
+/* ==========================================================================
+   PDF: Seite 1 = Tagesplan (Gericht + Gramm pro Person) · ab Seite 2 = Einkaufsliste
+   ========================================================================== */
+function planPdfPages() {
+  const dates = windowDates();
+  const people = S.persons;
+  const colW = Math.floor((842 - 40 - 400) / Math.max(1, people.length));
+  const pages = [];
+  let ops = [];
+  let y = 0;
+  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 555; };
+  const need = h => { if (y - h < 40) newPage(); };
+
+  newPage();
+  ops.push({ x: 40, y: 560, s: 16, b: true, t: 'Wochenplan · ' + windowLabel() });
+  ops.push({ x: 40, y: 542, s: 9, t: 'Stand ' + dateLong(todayISO()) + ' · ' + (isSaved() ? 'gespeichert' : 'Entwurf') + ' · pro Tag das gewählte Gericht, Gramm pro Person' });
+  y = 518;
+  ops.push({ x: 40, y, s: 9, b: true, t: 'Tag' });
+  ops.push({ x: 130, y, s: 9, b: true, t: 'Gericht' });
+  people.forEach((p, k) => ops.push({ x: 400 + k * colW, y, s: 9, b: true, t: p.name + ' (Ziel ' + fmtN(proteinTarget(p), 0) + ' g)' }));
+  y -= 14;
+
+  dates.forEach(d => {
+    const t = dayTotals(d);
+    const titleLines = t.recipe ? pdfWrap(t.recipe.title, 36) : ['noch offen'];
+    const cells = people.map(p => {
+      const port = t.portions.find(x => x.person.id === p.id);
+      if (!t.recipe || !port) return ['nicht dabei'];
+      return port.port.flatMap(x => pdfWrap(x.item.name + ': ' + fmtG(x.grams), 22));
+    });
+    const rows = Math.max(titleLines.length, ...cells.map(c => c.length));
+    const h = rows * 10 + 8;
+    need(h);
+    ops.push({ x: 40, y, s: 9, b: true, t: dateLong(d) });
+    titleLines.forEach((l, k) => ops.push({ x: 130, y: y - k * 10, s: 9, b: k === 0, t: l }));
+    cells.forEach((c, pi) => c.forEach((l, k) => ops.push({ x: 400 + pi * colW, y: y - k * 10, s: 7.5, t: l })));
+    y -= h;
+  });
+
+  /* Einkaufsliste */
+  const { lines } = shopping();
+  newPage();
+  ops.push({ x: 40, y: 560, s: 16, b: true, t: 'Einkaufsliste für die Woche · ' + windowLabel() });
+  ops.push({ x: 40, y: 542, s: 9, t: 'Einkauf am ' + dateLong(todayISO()) + '. Mengen nach Abzug des Vorrats, Packungen auf volle Lidl-Gebinde aufgerundet.' });
+  y = 520;
+  DEPARTMENTS.filter(d => d.key !== 'extra').forEach(d => {
+    const items = lines.filter(l => l.item.dept === d.key);
+    if (!items.length) return;
+    need(30);
+    y -= 6;
+    ops.push({ x: 40, y, s: 11, b: true, t: d.label });
+    y -= 14;
+    items.forEach(l => {
+      const text = '[  ]  ' + l.packs + '× ' + l.item.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.item.name + (l.stock ? '  (Vorrat abgezogen)' : '');
+      pdfWrap(text, 130).forEach(part => {
+        need(13);
+        ops.push({ x: 50, y, s: 9.5, t: part });
+        y -= 13;
+      });
+    });
+  });
+  if (S.shopExtras.length) {
+    need(30);
+    y -= 6;
+    ops.push({ x: 40, y, s: 11, b: true, t: 'Zusatzwünsche' });
+    y -= 14;
+    S.shopExtras.forEach(e => { need(13); ops.push({ x: 50, y, s: 9.5, t: '[  ]  ' + e.text }); y -= 13; });
+  }
+  if (!lines.length && !S.shopExtras.length) ops.push({ x: 40, y, s: 10, t: 'Nichts einzukaufen.' });
+  newPage();
+  return pages;
+}
+
+function downloadPdf() {
+  const bytes = buildPdf(planPdfPages());
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Wochenplan_' + windowDates()[0] + '.pdf';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  toast('PDF erstellt.');
+}
+
+/* ==========================================================================
+   AKTIONEN & EVENTS
+   ========================================================================== */
+function handleAction(action, ds) {
+  switch (action) {
+    case 'tab': ui.tab = ds.value; return render();
+    case 'presence': {
+      const day = S.days[ds.date];
+      day.absent = day.absent.includes(ds.person) ? day.absent.filter(id => id !== ds.person) : [...day.absent, ds.person];
+      return render();
+    }
+    case 'reroll': {
+      const day = S.days[ds.date];
+      day.options = generateOptions(ds.date, day.options || []);
+      day.recipeId = null;
+      day.custom = null;
+      return render();
+    }
+    case 'choose': {
+      const day = S.days[ds.date];
+      day.recipeId = ds.recipe;
+      day.custom = null;
+      closeModal();
+      return render();
+    }
+    case 'change': {
+      const day = S.days[ds.date];
+      day.recipeId = null;
+      day.custom = null;
+      return render();
+    }
+    case 'pickFor': return openPicker(ds.date);
+    case 'pfilter': ui.pickerFilter = ui.pickerFilter === ds.value ? '' : ds.value; return renderPicker();
+    case 'builder': return openBuilder(ds.date);
+    case 'vaultForm': return openVaultForm();
+    case 'exportPdf': return downloadPdf();
+    case 'saveWeek': {
+      S.savedWindow = { start: windowDates()[0], savedAt: new Date().toISOString() };
+      render();
+      return downloadPdf();
+    }
+    case 'unlockWeek': S.savedWindow = null; return render();
+    case 'removeExtra': {
+      S.shopExtras = S.shopExtras.filter(e => e.id !== ds.id);
+      delete S.shopChecked['x:' + ds.id];
+      return render();
+    }
+    case 'pantryAdd': {
+      if (!S.pantry[ds.id]) S.pantry[ds.id] = CATALOG_BY_ID[ds.id].packG;
+      return render();
+    }
+    case 'pantryStep': {
+      const g = Math.max(0, (S.pantry[ds.id] || 0) + Number(ds.value));
+      if (g === 0) delete S.pantry[ds.id]; else S.pantry[ds.id] = g;
+      return render();
+    }
+    case 'addPerson': {
+      if (S.persons.length >= MAX_PERSONS) return toast('Maximal 5 Personen.');
+      S.persons.push(sanitizePerson({ id: 'p' + Date.now(), name: `Person ${S.persons.length + 1}`, kg: 70, goal: 'erhalt' }));
+      return render();
+    }
+    case 'removePerson': {
+      if (S.persons.length <= 1) return;
+      const p = S.persons.find(x => x.id === ds.person);
+      if (!p || !window.confirm(`${p.name} entfernen?`)) return;
+      S.persons = S.persons.filter(x => x.id !== p.id);
+      Object.values(S.days).forEach(d => { d.absent = d.absent.filter(id => id !== p.id); });
+      return render();
+    }
+    case 'pref': {
+      const p = S.persons.find(x => x.id === ds.person);
+      if (!p) return;
+      const list = ds.kind === 'like' ? p.likes : p.nogos;
+      const next = list.includes(ds.value) ? list.filter(k => k !== ds.value) : [...list, ds.value];
+      if (ds.kind === 'like') p.likes = next; else p.nogos = next;
+      return render();
+    }
+    case 'offer': {
+      S.offers = S.offers.includes(ds.id) ? S.offers.filter(x => x !== ds.id) : [...S.offers, ds.id];
+      return render();
+    }
+    case 'calClear': S.calendar = { importedAt: null, events: [] }; return render();
+    case 'exportDb': {
+      const data = { app: 'mensa-high-protein', version: 6, exportedAt: new Date().toISOString(), state: S, customRecipes: loadCustomRecipes() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'mensa-datenbank.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      return toast('Datenbank exportiert.');
+    }
+    case 'reset': {
+      if (!window.confirm('Alle Personen, Pläne, Vorräte und Kalenderdaten auf diesem Gerät löschen?')) return;
+      localStorage.removeItem(STATE_KEY);
+      S = defaultState();
+      return render();
+    }
+    case 'closeModal': return closeModal();
+  }
+}
+
+function handleField(el) {
+  const field = el.dataset.field;
+  if (field === 'checked') {
+    S.shopChecked[el.dataset.key] = el.checked;
+    return render();
+  }
+  if (field === 'pantry-g') {
+    const g = Math.max(0, Math.round(Number(el.value) || 0));
+    if (g === 0) delete S.pantry[el.dataset.id]; else S.pantry[el.dataset.id] = g;
+    return render();
+  }
+  if (field === 'ics') {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const events = parseICS(String(reader.result || ''));
+      S.calendar = { importedAt: new Date().toISOString(), events };
+      toast(`Kalender importiert: ${events.length} Termine, ${calHits().length} Abwesenheit(en) im Planungszeitraum.`);
+      render();
+    };
+    reader.readAsText(file);
+    return;
+  }
+  if (field === 'dbimport') {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result || ''));
+        if (!data || data.app !== 'mensa-high-protein' || !data.state || !Array.isArray(data.state.persons)) {
+          return toast('Das ist keine Mensa-Datenbank.');
+        }
+        if (!window.confirm('Aktuelle Daten durch die Datei ersetzen?')) return;
+        S = { ...defaultState(), ...data.state };
+        try { localStorage.setItem(CUSTOM_RECIPES_KEY, JSON.stringify(Array.isArray(data.customRecipes) ? data.customRecipes : [])); } catch (e) { /* ignorieren */ }
+        invalidate();
+        toast('Datenbank geladen.');
+        render();
+      } catch (e) { toast('Datei konnte nicht gelesen werden.'); }
+    };
+    reader.readAsText(file);
+    return;
+  }
+
+  const p = S.persons.find(x => x.id === el.dataset.person);
+  if (!p) return;
+  if (field === 'name') p.name = String(el.value).trim().slice(0, 30) || p.name;
+  if (field === 'kg') p.kg = clamp(Number(el.value) || p.kg, 30, 250);
+  if (field === 'goal' && GOALS[el.value]) p.goal = el.value;
+  render();
+}
+
+function submitForm(form) {
+  if (form.id === 'builder-form') return submitBuilder(form);
+  if (form.id === 'vault-form') return submitVault(form);
+  if (form.id === 'extra-form') {
+    const text = String(new FormData(form).get('text') || '').trim().slice(0, 80);
+    if (!text) return;
+    S.shopExtras.push({ id: 'x' + Date.now(), text });
+    render();
+  }
+}
+
+/* ==========================================================================
+   INIT
+   ========================================================================== */
+function init() {
+  S = loadState();
+  syncWindow();
+
+  document.addEventListener('click', e => {
+    const el = e.target.closest('[data-action]');
+    if (el) {
+      if (el.disabled) return;
+      e.preventDefault();
+      handleAction(el.dataset.action, el.dataset);
+    } else if (e.target.id === 'modal') {
+      closeModal();
+    }
+  });
+  document.addEventListener('change', e => {
+    if (e.target.dataset && e.target.dataset.field) handleField(e.target);
+  });
+  document.addEventListener('input', e => {
+    const id = e.target.id;
+    if (id === 'picker-search') { ui.pickerQ = e.target.value; renderPickerList(); }
+    if (id === 'pantry-search') { ui.pantryQ = e.target.value; renderPantryResults(); }
+    if (id === 'offer-search') { ui.offerQ = e.target.value; renderOfferResults(); }
+  });
+  document.addEventListener('submit', e => { e.preventDefault(); submitForm(e.target); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  render();
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+
+</script>
+</body>
+</html>

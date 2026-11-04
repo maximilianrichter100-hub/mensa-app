@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#ffffff">
+  <title>Mensa High-Protein</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div id="app">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1 id="topbar-title">Wochenplan</h1>
+        <p id="topbar-sub"></p>
+      </div>
+    </header>
+
+    <main id="view" class="main"></main>
+
+    <nav class="tabbar" aria-label="Hauptnavigation">
+      <button class="tabbtn" data-action="tab" data-value="plan" data-tab-btn="plan"><span>🗓️</span>Wochenplan</button>
+      <button class="tabbtn" data-action="tab" data-value="einkauf" data-tab-btn="einkauf"><span>🛒</span>Einkauf</button>
+      <button class="tabbtn" data-action="tab" data-value="mehr" data-tab-btn="mehr"><span>⚙️</span>Einstellungen</button>
+    </nav>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button class="icon" data-action="closeModal" aria-label="Schließen">✕</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Druckbereich: nur beim Drucken sichtbar -->
+  <div id="print-root"></div>
+
+  <script src="lidl_catalog.js"></script>
+  <script src="lidl_catalog_extra.js"></script>
+  <script src="recipes_db.js"></script>
+  <script src="recipes_extra.js"></script>
+  <script src="bowls.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
