@@ -1831,7 +1831,7 @@ function sanitizePerson(p) {
   };
 }
 
-function newDay() { return { recipeId: null, custom: null, absent: [], options: [] }; }
+function newDay() { return { recipeId: null, custom: null, absent: [], options: [], skip: false }; }
 
 function defaultState() {
   return {
@@ -1842,8 +1842,14 @@ function defaultState() {
     calendar: { importedAt: null, events: [] },
     shopChecked: {},
     shopExtras: [],
-    savedWindow: null
+    savedWindow: null,
+    archive: []
   };
+}
+
+/* Aktive Tage: ohne weggelassene Tage */
+function activeDates() {
+  return windowDates().filter(d => !(S.days[d] && S.days[d].skip));
 }
 
 /* Woche gespeichert = gespeichertes Fenster beginnt noch am heutigen Startdatum */
@@ -2085,7 +2091,7 @@ function generateOptions(date, exclude) {
 function shopping() {
   const totals = {};
   const perDay = [];
-  windowDates().forEach(d => {
+  activeDates().forEach(d => {
     const t = dayTotals(d);
     perDay.push({ date: d, ...t });
     Object.entries(t.lines).forEach(([id, g]) => { totals[id] = (totals[id] || 0) + g; });
@@ -2130,7 +2136,7 @@ function viewPlan() {
            <div class="row wrap mt"><button class="btn small-btn" data-action="pickFor" data-date="${today}">Heute eintragen</button></div>`}
     </section>`;
   const dates = windowDates();
-  const planned = dates.filter(d => dayRecipe(S.days[d])).length;
+  const planned = activeDates().filter(d => dayRecipe(S.days[d])).length;
   const hits = calHits();
   const saved = isSaved();
 
@@ -2138,7 +2144,7 @@ function viewPlan() {
     <div class="stack">
       ${todayBlock}
       ${saved ? `<section class="card hero"><p class="eyebrow">✅ Gespeichert</p><p class="small">Woche ${esc(windowLabel())} gespeichert am ${new Date(S.savedWindow.savedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}. Pro Tag steht ein Gericht.</p><div class="row wrap mt"><button class="btn small-btn" data-action="unlockWeek">🔓 Woche ändern</button></div></section>` : ''}
-      <p class="small muted">${planned} von ${WINDOW_DAYS} Tagen geplant. Pro Tag drei Vorschläge – wähle einen oder würfle neu.</p>
+      <p class="small muted">${planned} von ${activeDates().length} Tagen geplant. Pro Tag drei Vorschläge – wähle einen oder würfle neu.</p>
       <div class="stack">${dates.map(d => dayCard(d)).join('')}</div>
       ${hits.length ? `<section class="card">
         <p class="eyebrow">Kalender-Treffer</p>
@@ -2154,6 +2160,14 @@ function viewPlan() {
 
 function dayCard(date) {
   const day = S.days[date];
+  if (day && day.skip) {
+    return `<article class="card dayrow skipped">
+      <div class="dayhead">
+        <div class="grow"><b>${esc(dateLong(date))}</b><span class="small muted block">Tag entfällt</span></div>
+        <button class="btn small-btn" data-action="unskipDay" data-date="${date}">Wieder aufnehmen</button>
+      </div>
+    </article>`;
+  }
   const r = dayRecipe(day);
   const present = presentPersons(date);
   const ab = absentSet(date);
@@ -2201,6 +2215,7 @@ function dayCard(date) {
       </div>
       <div class="pchips">${people}</div>
       ${body}
+      <button class="link" data-action="skipDay" data-date="${date}">Tag weglassen</button>
     </article>`;
 }
 
@@ -2251,7 +2266,7 @@ function viewEinkauf() {
       <section class="card hero">
         <p class="eyebrow">Für die ganze Woche</p>
         <h2>${lines.length ? `${lines.length} Artikel` : 'Nichts einzukaufen'}</h2>
-        <p class="muted small">${planned} von ${WINDOW_DAYS} Tagen geplant · ${done} von ${lines.length} erledigt · Vorrat ist abgezogen</p>
+        <p class="muted small">${planned} von ${activeDates().length} Tagen geplant · ${done} von ${lines.length} erledigt · Vorrat ist abgezogen</p>
         <div class="bar"><span style="width:${lines.length ? (done / lines.length * 100).toFixed(0) : 0}%"></span></div>
       </section>
       ${groups || '<p class="muted">Noch keine Gerichte gewählt – oder der Vorrat deckt alles ab.</p>'}
@@ -2303,6 +2318,12 @@ function viewMehr() {
 
   return `
     <div class="stack">
+      <p class="eyebrow dept">Gespeicherte Wochen</p>
+      <div class="card list">${S.archive.map(x => `<div class="row-item">
+        <span class="grow"><b>${esc(x.label)}</b><span class="small muted block">gespeichert ${new Date(x.savedAt).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</span></span>
+        <button class="btn small-btn" data-action="archivePdf" data-id="${esc(x.id)}">PDF</button>
+        <button class="link danger" data-action="archiveDelete" data-id="${esc(x.id)}">✕</button>
+      </div>`).join('') || '<p class="muted small pad">Noch keine gespeicherten Wochen.</p>'}</div>
       <p class="eyebrow dept">Personen</p>
       ${people}
       ${S.persons.length < MAX_PERSONS ? `<button class="btn" data-action="addPerson">+ Person hinzufügen</button>` : ''}
@@ -2553,59 +2574,96 @@ function submitVault(form) {
 }
 
 /* ==========================================================================
-   PDF: Seite 1 = Tagesplan (Gericht + Gramm pro Person) · ab Seite 2 = Einkaufsliste
+   INHALT & PDF
+   buildPlanContent() erzeugt den Plan als Daten (auch für das Archiv).
+   Die PDF ist nach Gerichten gegliedert: pro Tag das Gericht mit Gesamtmengen
+   aller anwesenden Personen. Die Einkaufsliste ist die Summe über die Woche.
    ========================================================================== */
-function planPdfPages() {
-  const dates = windowDates();
-  const people = S.persons;
-  const colW = Math.floor((842 - 40 - 400) / Math.max(1, people.length));
+function buildPlanContent() {
+  const dates = activeDates();
+  const days = dates.map(d => {
+    const t = dayTotals(d);
+    const sums = [];
+    const idx = {};
+    t.portions.forEach(px => px.port.forEach(x => {
+      const key = x.item.id;
+      if (idx[key] === undefined) { idx[key] = sums.length; sums.push({ name: x.item.name, grams: 0 }); }
+      sums[idx[key]].grams += x.grams;
+    }));
+    return {
+      date: d,
+      title: t.recipe ? t.recipe.title : null,
+      minutes: t.recipe ? t.recipe.prepTime : null,
+      people: t.present.map(p => p.name),
+      grams: t.grams,
+      protein: t.protein,
+      sums
+    };
+  });
+  const { lines } = shopping();
+  return {
+    start: windowDates()[0],
+    label: windowLabel(),
+    saved: isSaved(),
+    days,
+    skipped: windowDates().filter(d => !dates.includes(d)),
+    shop: lines.map(l => ({ dept: l.item.dept, packs: l.packs, packLabel: l.item.packLabel, net: l.net, name: l.item.name, stock: l.stock })),
+    extras: S.shopExtras.map(e => e.text)
+  };
+}
+
+/* Seiten für die PDF (A4 quer): Gerichte, danach Einkaufsliste */
+function renderPdfPages(c) {
   const pages = [];
   let ops = [];
   let y = 0;
-  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 555; };
+  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 548; };
   const need = h => { if (y - h < 40) newPage(); };
+  const header = (title, sub) => {
+    ops.push({ x: 40, y: 560, s: 16, b: true, t: title });
+    ops.push({ x: 40, y: 543, s: 9, t: sub });
+    y = 520;
+  };
 
   newPage();
-  ops.push({ x: 40, y: 560, s: 16, b: true, t: 'Wochenplan · ' + windowLabel() });
-  ops.push({ x: 40, y: 542, s: 9, t: 'Stand ' + dateLong(todayISO()) + ' · ' + (isSaved() ? 'gespeichert' : 'Entwurf') + ' · pro Tag das gewählte Gericht, Gramm pro Person' });
-  y = 518;
-  ops.push({ x: 40, y, s: 9, b: true, t: 'Tag' });
-  ops.push({ x: 130, y, s: 9, b: true, t: 'Gericht' });
-  people.forEach((p, k) => ops.push({ x: 400 + k * colW, y, s: 9, b: true, t: p.name + ' (Ziel ' + fmtN(proteinTarget(p), 0) + ' g)' }));
-  y -= 14;
-
-  dates.forEach(d => {
-    const t = dayTotals(d);
-    const titleLines = t.recipe ? pdfWrap(t.recipe.title, 36) : ['noch offen'];
-    const cells = people.map(p => {
-      const port = t.portions.find(x => x.person.id === p.id);
-      if (!t.recipe || !port) return ['nicht dabei'];
-      return port.port.flatMap(x => pdfWrap(x.item.name + ': ' + fmtG(x.grams), 22));
-    });
-    const rows = Math.max(titleLines.length, ...cells.map(c => c.length));
-    const h = rows * 10 + 8;
+  header('Wochenplan · ' + c.label, (c.saved ? 'Gespeichert' : 'Entwurf') + ' · Gerichte mit Gesamtmengen zum Kochen');
+  c.days.forEach(day => {
+    if (!day.title) {
+      need(26);
+      ops.push({ x: 40, y, s: 11, b: true, t: dateLong(day.date) + ' – noch offen' });
+      y -= 22;
+      return;
+    }
+    const who = day.people.length ? day.people.join(', ') : 'niemand';
+    const h = 30 + day.sums.length * 12 + 10;
     need(h);
-    ops.push({ x: 40, y, s: 9, b: true, t: dateLong(d) });
-    titleLines.forEach((l, k) => ops.push({ x: 130, y: y - k * 10, s: 9, b: k === 0, t: l }));
-    cells.forEach((c, pi) => c.forEach((l, k) => ops.push({ x: 400 + pi * colW, y: y - k * 10, s: 7.5, t: l })));
-    y -= h;
+    ops.push({ x: 40, y, s: 11, b: true, t: dateLong(day.date) + ' – ' + day.title });
+    y -= 14;
+    ops.push({ x: 40, y, s: 8.5, t: 'für ' + day.people.length + ' Person(en): ' + who + ' · Zeit ' + day.minutes + ' Min · Kochtopf gesamt ' + fmtG(day.grams) + ' · Protein gesamt ' + fmtN(day.protein, 0) + ' g' });
+    y -= 14;
+    day.sums.forEach(s => {
+      ops.push({ x: 56, y, s: 9.5, t: fmtG(s.grams) + '   ' + s.name });
+      y -= 12;
+    });
+    y -= 10;
   });
+  if (c.skipped.length) {
+    need(20);
+    y -= 4;
+    ops.push({ x: 40, y, s: 9, t: 'Entfallene Tage: ' + c.skipped.map(dateShort).join(', ') });
+  }
 
-  /* Einkaufsliste */
-  const { lines } = shopping();
   newPage();
-  ops.push({ x: 40, y: 560, s: 16, b: true, t: 'Einkaufsliste für die Woche · ' + windowLabel() });
-  ops.push({ x: 40, y: 542, s: 9, t: 'Einkauf am ' + dateLong(todayISO()) + '. Mengen nach Abzug des Vorrats, Packungen auf volle Lidl-Gebinde aufgerundet.' });
-  y = 520;
+  header('Einkaufsliste für die Woche · ' + c.label, 'Gesamtmengen über alle Tage, Vorrat abgezogen, Packungen auf volle Lidl-Gebinde aufgerundet');
   DEPARTMENTS.filter(d => d.key !== 'extra').forEach(d => {
-    const items = lines.filter(l => l.item.dept === d.key);
+    const items = c.shop.filter(l => l.dept === d.key);
     if (!items.length) return;
-    need(30);
+    need(34);
     y -= 6;
     ops.push({ x: 40, y, s: 11, b: true, t: d.label });
     y -= 14;
     items.forEach(l => {
-      const text = '[  ]  ' + l.packs + '× ' + l.item.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.item.name + (l.stock ? '  (Vorrat abgezogen)' : '');
+      const text = '[  ]  ' + l.packs + '× ' + l.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.name + (l.stock ? '  (Vorrat abgezogen)' : '');
       pdfWrap(text, 130).forEach(part => {
         need(13);
         ops.push({ x: 50, y, s: 9.5, t: part });
@@ -2613,24 +2671,24 @@ function planPdfPages() {
       });
     });
   });
-  if (S.shopExtras.length) {
-    need(30);
+  if (c.extras.length) {
+    need(34);
     y -= 6;
     ops.push({ x: 40, y, s: 11, b: true, t: 'Zusatzwünsche' });
     y -= 14;
-    S.shopExtras.forEach(e => { need(13); ops.push({ x: 50, y, s: 9.5, t: '[  ]  ' + e.text }); y -= 13; });
+    c.extras.forEach(t => { need(13); ops.push({ x: 50, y, s: 9.5, t: '[  ]  ' + t }); y -= 13; });
   }
-  if (!lines.length && !S.shopExtras.length) ops.push({ x: 40, y, s: 10, t: 'Nichts einzukaufen.' });
+  if (!c.shop.length && !c.extras.length) ops.push({ x: 40, y, s: 10, t: 'Nichts einzukaufen.' });
   newPage();
   return pages;
 }
 
-function downloadPdf() {
-  const bytes = buildPdf(planPdfPages());
+function downloadPdfFile(c) {
+  const bytes = buildPdf(renderPdfPages(c));
   const blob = new Blob([bytes], { type: 'application/pdf' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'Wochenplan_' + windowDates()[0] + '.pdf';
+  a.download = 'Wochenplan_' + c.start + '.pdf';
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
@@ -2672,12 +2730,27 @@ function handleAction(action, ds) {
     case 'pfilter': ui.pickerFilter = ui.pickerFilter === ds.value ? '' : ds.value; return renderPicker();
     case 'builder': return openBuilder(ds.date);
     case 'vaultForm': return openVaultForm();
-    case 'exportPdf': return downloadPdf();
+    case 'exportPdf': return downloadPdfFile(buildPlanContent());
     case 'saveWeek': {
-      S.savedWindow = { start: windowDates()[0], savedAt: new Date().toISOString() };
+      const c = buildPlanContent();
+      const savedAt = new Date().toISOString();
+      S.savedWindow = { start: c.start, savedAt };
+      S.archive = [{ id: 'a' + Date.now(), savedAt, label: c.label, content: c }, ...S.archive.filter(x => x.content.start !== c.start)].slice(0, 60);
       render();
-      return downloadPdf();
+      return downloadPdfFile(c);
     }
+    case 'archivePdf': {
+      const x = S.archive.find(e => e.id === ds.id);
+      if (x) downloadPdfFile(x.content);
+      return;
+    }
+    case 'archiveDelete': {
+      if (!window.confirm('Diese gespeicherte Woche löschen?')) return;
+      S.archive = S.archive.filter(e => e.id !== ds.id);
+      return render();
+    }
+    case 'skipDay': S.days[ds.date].skip = true; return render();
+    case 'unskipDay': S.days[ds.date].skip = false; return render();
     case 'unlockWeek': S.savedWindow = null; return render();
     case 'removeExtra': {
       S.shopExtras = S.shopExtras.filter(e => e.id !== ds.id);
