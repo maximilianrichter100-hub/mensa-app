@@ -1844,6 +1844,7 @@ function defaultState() {
     shopChecked: {},
     shopExtras: [],
     savedWindow: null,
+    imported: [],
     archive: []
   };
 }
@@ -1913,7 +1914,68 @@ function dayRecipe(day) {
     const e = enrichRecipe(day.custom);
     return { ...e, themes: themesOf(e) };
   }
-  return day.recipeId ? recipeById(day.recipeId) : null;
+  if (!day.recipeId) return null;
+  if (day.recipeId.startsWith('imp_')) return importedAsRecipes().find(r => r.id === day.recipeId) || null;
+  return recipeById(day.recipeId);
+}
+
+/* ----- Importierte Rezepte (Format: name, kategorie, zutaten[{name,menge}], schritte) ----- */
+function importedAsRecipes() {
+  return (S.imported || []).map(r => ({
+    id: r.id, title: r.title, category: 'import', season: 'all', prepTime: r.prepTime,
+    components: null, imported: true, ingredients: r.ingredients, steps: r.steps,
+    proteinTags: [], tags: [], uses: [], themes: [], wheatFree: false, bowl: false, custom: false
+  }));
+}
+
+function parseGrams(menge) {
+  const m = String(menge).toLowerCase().replace(',', '.').match(/^\s*(\d+(\.\d+)?)\s*(g|kg)\s*$/);
+  if (!m) return null;
+  return Math.round(Number(m[1]) * (m[3] === 'kg' ? 1000 : 1));
+}
+
+/* Ordnet einen Zutatennamen einem Lidl-Artikel zu (nur wenn eindeutig) */
+function matchCatalog(name) {
+  const n = String(name).toLowerCase().trim();
+  if (!n) return null;
+  const exact = LIDL_CATALOG.find(i => i.name.toLowerCase().split(' (')[0] === n);
+  if (exact) return exact;
+  if (n.length < 4) return null;
+  return LIDL_CATALOG.find(i => i.name.toLowerCase().includes(n)) || null;
+}
+
+function parseMinutes(v) {
+  const m = String(v || '').match(/\d+/);
+  return m ? Number(m[0]) : 20;
+}
+
+function parseRecipeImport(text, filename) {
+  const rows = [];
+  if (/\.csv$/i.test(filename)) {
+    const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
+    const head = (lines.shift() || '').split(',').map(s => s.trim().toLowerCase());
+    lines.forEach(l => {
+      const c = l.split(',');
+      const row = {};
+      head.forEach((h, i) => { row[h] = (c[i] || '').trim(); });
+      rows.push({ title: row['titel'], kategorie: row['kategorie'], zeit: row['zubereitungszeit'], zutaten: [], schritte: [] });
+    });
+  } else {
+    const data = JSON.parse(text);
+    (Array.isArray(data) ? data : [data]).forEach(r => rows.push({
+      title: r.name || r.titel, kategorie: r.kategorie, zeit: r.zubereitungszeit || r.zeit,
+      zutaten: r.zutaten || [], schritte: r.schritte || []
+    }));
+  }
+  return rows.filter(r => r.title).map((r, k) => ({
+    id: 'imp_' + Date.now() + '_' + k,
+    title: String(r.title).slice(0, 100),
+    kategorie: r.kategorie || 'Import',
+    prepTime: parseMinutes(r.zeit),
+    ingredients: r.zutaten.map(z => ({ name: String(z.name), menge: String(z.menge || '') })),
+    steps: r.schritte.map(String),
+    imported: true
+  }));
 }
 
 /* ==========================================================================
@@ -2023,6 +2085,17 @@ function dayTotals(date) {
   const present = presentPersons(date);
   const t = { recipe, present, grams: 0, protein: 0, target: 0, lines: {}, portions: [] };
   if (!recipe) return t;
+  if (recipe.imported) {
+    const lines = {};
+    const texts = [];
+    recipe.ingredients.forEach(ing => {
+      const item = matchCatalog(ing.name);
+      const g = parseGrams(ing.menge);
+      if (item && g) lines[item.id] = (lines[item.id] || 0) + g;
+      else texts.push({ name: ing.name, menge: ing.menge });
+    });
+    return { recipe, present, grams: 0, protein: 0, target: 0, lines, portions: [], importedExtra: texts };
+  }
   present.forEach(p => {
     const port = portionFor(recipe, p);
     const m = sumMacros(port);
@@ -2058,7 +2131,7 @@ function windowUsage(exceptDate) {
     (day.options || []).forEach(id => used.add(id));
     if (day.recipeId) used.add(day.recipeId);
     const r = dayRecipe(day);
-    if (r) prot[r.components.protein.id] = (prot[r.components.protein.id] || 0) + 1;
+    if (r && r.components) prot[r.components.protein.id] = (prot[r.components.protein.id] || 0) + 1;
   });
   return { used, prot };
 }
@@ -2092,9 +2165,11 @@ function generateOptions(date, exclude) {
 function shopping() {
   const totals = {};
   const perDay = [];
+  const texts = [];
   activeDates().forEach(d => {
     const t = dayTotals(d);
     perDay.push({ date: d, ...t });
+    (t.importedExtra || []).forEach(x => texts.push({ date: d, ...x }));
     Object.entries(t.lines).forEach(([id, g]) => { totals[id] = (totals[id] || 0) + g; });
   });
   const deptOrder = Object.fromEntries(DEPARTMENTS.map(d => [d.key, d.order]));
@@ -2106,7 +2181,7 @@ function shopping() {
     return { id, item, grams, stock, net, packs };
   }).filter(l => l.net > 0);
   lines.sort((a, b) => (deptOrder[a.item.dept] - deptOrder[b.item.dept]) || a.item.name.localeCompare(b.item.name, 'de'));
-  return { lines, perDay };
+  return { lines, perDay, texts };
 }
 
 /* ==========================================================================
@@ -2183,14 +2258,14 @@ function dayCard(date) {
   let body;
   if (isSaved()) {
     body = r
-      ? mealCard(date, r, true) + '<p class="small muted">Kochtopf ' + fmtG(dayTotals(date).grams) + ' · Protein ' + fmtN(dayTotals(date).protein, 0) + ' g</p>'
+      ? mealCard(date, r, true) + (r.imported ? '<p class="small muted">Mengen wie importiert</p>' : '<p class="small muted">Kochtopf ' + fmtG(dayTotals(date).grams) + ' · Protein ' + fmtN(dayTotals(date).protein, 0) + ' g</p>')
       : '<p class="muted small">Kein Gericht an diesem Tag.</p>';
   } else if (r) {
     const conf = conflictsFor(r, present);
     const t = dayTotals(date);
     body = `
       ${mealCard(date, r, true)}
-      <p class="small muted">Kochtopf ${fmtG(t.grams)} · Protein ${fmtN(t.protein, 0)} g${conf.length ? ` · <span class="warn-inline">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}</p>
+      <p class="small muted">${r.imported ? 'Mengen wie importiert' : 'Kochtopf ' + fmtG(t.grams) + ' · Protein ' + fmtN(t.protein, 0) + ' g'}${conf.length ? ` · <span class="warn-inline">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}</p>
       <div class="row wrap">
         <button class="btn small-btn" data-action="change" data-date="${date}">Gericht ändern</button>
         <button class="btn small-btn" data-action="pickFor" data-date="${date}">Anderes suchen</button>
@@ -2354,6 +2429,14 @@ function viewMehr() {
         <div id="offer-results" class="stack-sm mt"></div>
       </section>
 
+      <p class="eyebrow dept">Rezepte importieren</p>
+      <section class="card">
+        <p class="small">Rezept-Datei als .json (Felder: name, kategorie, zutaten [{name, menge}], schritte) oder .csv (Titel, Kategorie, Zubereitungszeit). Mengen werden genau so übernommen, wie sie in der Datei stehen.</p>
+        <p class="small muted mt">${S.imported.length} importierte Rezepte</p>
+        <label class="btn file-btn mt">📥 Rezept-Datei wählen<input type="file" accept=".json,.csv,application/json,text/csv" data-field="recipeimport" hidden></label>
+        ${S.imported.length ? '<button class="btn mt" data-action="importClear">Importierte Rezepte löschen</button>' : ''}
+      </section>
+
       <p class="eyebrow dept">Datenbank</p>
       <section class="card">
         <p class="small">Alles (Personen, Plan, Vorrat, eigene Rezepte) als Datei sichern oder auf ein anderes Gerät laden.</p>
@@ -2439,7 +2522,7 @@ function renderPickerList() {
   if (!box || !date) return;
   const present = presentPersons(date);
   const q = ui.pickerQ.trim().toLowerCase();
-  const list = allRecipes()
+  const list = [...allRecipes(), ...importedAsRecipes()]
     .filter(r => !r.custom)
     .filter(r => {
       const f = ui.pickerFilter;
@@ -2456,7 +2539,7 @@ function renderPickerList() {
     <button class="row-item" data-action="choose" data-date="${date}" data-recipe="${esc(r.id)}">
       <span class="grow">
         <b>${esc(r.title)}</b>
-        <span class="small muted block">⏱ ${r.prepTime} Min · ${esc(RECIPE_CATEGORIES[r.category])}${r.wheatFree ? ' · 🌾 weizenfrei' : ''}${r.bowl ? ' · 🥗 Bowl' : ''}</span>
+        <span class="small muted block">⏱ ${r.prepTime} Min · ${esc(RECIPE_CATEGORIES[r.category] || 'Import')}${r.wheatFree ? ' · 🌾 weizenfrei' : ''}${r.bowl ? ' · 🥗 Bowl' : ''}</span>
         ${conf.length ? `<span class="warn-inline block">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}
       </span>
     </button>`).join('') || '<p class="pad muted small">Keine Treffer.</p>';
@@ -2584,24 +2667,31 @@ function buildPlanContent() {
   const dates = activeDates();
   const days = dates.map(d => {
     const t = dayTotals(d);
-    const sums = [];
-    const idx = {};
-    t.portions.forEach(px => px.port.forEach(x => {
-      const key = x.item.id;
-      if (idx[key] === undefined) { idx[key] = sums.length; sums.push({ name: x.item.name, grams: 0 }); }
-      sums[idx[key]].grams += x.grams;
-    }));
+    const r = t.recipe;
+    let sums = [];
+    if (r && r.imported) {
+      sums = r.ingredients.map(ing => ({ name: ing.name, grams: parseGrams(ing.menge), text: ing.menge }));
+    } else {
+      const idx = {};
+      t.portions.forEach(px => px.port.forEach(x => {
+        const key = x.item.id;
+        if (idx[key] === undefined) { idx[key] = sums.length; sums.push({ name: x.item.name, grams: 0, text: null }); }
+        sums[idx[key]].grams += x.grams;
+      }));
+    }
     return {
       date: d,
-      title: t.recipe ? t.recipe.title : null,
-      minutes: t.recipe ? t.recipe.prepTime : null,
+      title: r ? r.title : null,
+      minutes: r ? r.prepTime : null,
+      imported: !!(r && r.imported),
       people: t.present.map(p => p.name),
       grams: t.grams,
       protein: t.protein,
-      sums
+      sums,
+      steps: r ? (r.steps || []) : []
     };
   });
-  const { lines } = shopping();
+  const { lines, texts } = shopping();
   return {
     start: windowDates()[0],
     label: windowLabel(),
@@ -2609,77 +2699,77 @@ function buildPlanContent() {
     days,
     skipped: windowDates().filter(d => !dates.includes(d)),
     shop: lines.map(l => ({ dept: l.item.dept, packs: l.packs, packLabel: l.item.packLabel, net: l.net, name: l.item.name, stock: l.stock })),
+    texts: texts.map(x => ({ date: x.date, name: x.name, menge: x.menge })),
     extras: S.shopExtras.map(e => e.text)
   };
 }
 
-/* Seiten für die PDF (A4 quer): Gerichte, danach Einkaufsliste */
+/* Seiten (A4 quer): je Gericht Zutaten mit Gesamtmengen und Zubereitung, danach Einkaufsliste */
 function renderPdfPages(c) {
   const pages = [];
   let ops = [];
-  let y = 0;
-  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 548; };
-  const need = h => { if (y - h < 40) newPage(); };
-  const header = (title, sub) => {
-    ops.push({ x: 40, y: 560, s: 16, b: true, t: title });
-    ops.push({ x: 40, y: 543, s: 9, t: sub });
-    y = 520;
+  let y = 540;
+  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 540; };
+  const put = (text, o = {}) => {
+    const size = o.s || 9;
+    const lh = size + 3.5;
+    pdfWrap(text, o.max || 150).forEach(part => {
+      if (y - lh < 36) newPage();
+      ops.push({ x: o.x || 40, y, s: size, b: !!o.b, t: part });
+      y -= lh;
+    });
   };
+  const gap = h => { y -= h; if (y < 36) newPage(); };
 
   newPage();
-  header('Wochenplan · ' + c.label, (c.saved ? 'Gespeichert' : 'Entwurf') + ' · Gerichte mit Gesamtmengen zum Kochen');
+  put('Wochenplan · ' + c.label, { s: 16, b: true, max: 90 });
+  put((c.saved ? 'Gespeichert' : 'Entwurf') + ' · Gerichte zum Kochen, Mengen insgesamt für alle anwesenden Personen', { s: 9 });
+  gap(8);
   c.days.forEach(day => {
     if (!day.title) {
-      need(26);
-      ops.push({ x: 40, y, s: 11, b: true, t: dateLong(day.date) + ' – noch offen' });
-      y -= 22;
+      put(dateLong(day.date) + ' – noch offen', { s: 11, b: true, max: 120 });
+      gap(8);
       return;
     }
+    put(dateLong(day.date) + ' – ' + day.title, { s: 12, b: true, max: 105 });
     const who = day.people.length ? day.people.join(', ') : 'niemand';
-    const h = 30 + day.sums.length * 12 + 10;
-    need(h);
-    ops.push({ x: 40, y, s: 11, b: true, t: dateLong(day.date) + ' – ' + day.title });
-    y -= 14;
-    ops.push({ x: 40, y, s: 8.5, t: 'für ' + day.people.length + ' Person(en): ' + who + ' · Zeit ' + day.minutes + ' Min · Kochtopf gesamt ' + fmtG(day.grams) + ' · Protein gesamt ' + fmtN(day.protein, 0) + ' g' });
-    y -= 14;
-    day.sums.forEach(s => {
-      ops.push({ x: 56, y, s: 9.5, t: fmtG(s.grams) + '   ' + s.name });
-      y -= 12;
-    });
-    y -= 10;
+    const meta = 'Zeit ' + day.minutes + ' Min · für ' + day.people.length + ' Person(en): ' + who +
+      (day.imported ? ' · Mengen wie importiert' : ' · Kochtopf gesamt ' + fmtG(day.grams) + ' · Protein gesamt ' + fmtN(day.protein, 0) + ' g');
+    put(meta, { s: 8.5, max: 165 });
+    put('Zutaten (gesamt):', { s: 9, b: true, max: 60 });
+    day.sums.forEach(s => put((s.grams != null ? fmtG(s.grams) : s.text) + '   ' + s.name, { s: 9, x: 56, max: 150 }));
+    if (day.steps.length) {
+      put('Zubereitung:', { s: 9, b: true, max: 60 });
+      day.steps.forEach((st, k) => put((k + 1) + '. ' + st, { s: 9, x: 56, max: 150 }));
+    }
+    gap(10);
   });
   if (c.skipped.length) {
-    need(20);
-    y -= 4;
-    ops.push({ x: 40, y, s: 9, t: 'Entfallene Tage: ' + c.skipped.map(dateShort).join(', ') });
+    gap(4);
+    put('Entfallene Tage: ' + c.skipped.map(dateShort).join(', '), { s: 9 });
   }
 
   newPage();
-  header('Einkaufsliste für die Woche · ' + c.label, 'Gesamtmengen über alle Tage, Vorrat abgezogen, Packungen auf volle Lidl-Gebinde aufgerundet');
+  put('Einkaufsliste für die Woche · ' + c.label, { s: 16, b: true, max: 90 });
+  put('Gesamtmengen über alle Tage, Vorrat abgezogen, Packungen auf volle Lidl-Gebinde aufgerundet', { s: 9 });
+  gap(6);
   DEPARTMENTS.filter(d => d.key !== 'extra').forEach(d => {
     const items = c.shop.filter(l => l.dept === d.key);
     if (!items.length) return;
-    need(34);
-    y -= 6;
-    ops.push({ x: 40, y, s: 11, b: true, t: d.label });
-    y -= 14;
-    items.forEach(l => {
-      const text = '[  ]  ' + l.packs + '× ' + l.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.name + (l.stock ? '  (Vorrat abgezogen)' : '');
-      pdfWrap(text, 130).forEach(part => {
-        need(13);
-        ops.push({ x: 50, y, s: 9.5, t: part });
-        y -= 13;
-      });
-    });
+    put(d.label, { s: 11, b: true, max: 100 });
+    items.forEach(l => put('[  ]  ' + l.packs + '× ' + l.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.name + (l.stock ? '  (Vorrat abgezogen)' : ''), { s: 9.5, x: 50, max: 130 }));
+    gap(4);
   });
-  if (c.extras.length) {
-    need(34);
-    y -= 6;
-    ops.push({ x: 40, y, s: 11, b: true, t: 'Zusatzwünsche' });
-    y -= 14;
-    c.extras.forEach(t => { need(13); ops.push({ x: 50, y, s: 9.5, t: '[  ]  ' + t }); y -= 13; });
+  if (c.texts.length) {
+    put('Ohne Gramm-Angabe – bitte prüfen', { s: 11, b: true, max: 100 });
+    c.texts.forEach(t => put('[  ]  ' + t.name + ': ' + t.menge + ' (' + dateShort(t.date) + ')', { s: 9.5, x: 50, max: 130 }));
+    gap(4);
   }
-  if (!c.shop.length && !c.extras.length) ops.push({ x: 40, y, s: 10, t: 'Nichts einzukaufen.' });
+  if (c.extras.length) {
+    put('Zusatzwünsche', { s: 11, b: true, max: 100 });
+    c.extras.forEach(t => put('[  ]  ' + t, { s: 9.5, x: 50, max: 130 }));
+  }
+  if (!c.shop.length && !c.texts.length && !c.extras.length) put('Nichts einzukaufen.', { s: 10 });
   newPage();
   return pages;
 }
@@ -2748,6 +2838,11 @@ function handleAction(action, ds) {
     case 'archiveDelete': {
       if (!window.confirm('Diese gespeicherte Woche löschen?')) return;
       S.archive = S.archive.filter(e => e.id !== ds.id);
+      return render();
+    }
+    case 'importClear': {
+      if (!window.confirm('Alle importierten Rezepte löschen?')) return;
+      S.imported = [];
       return render();
     }
     case 'skipDay': S.days[ds.date].skip = true; return render();
@@ -2834,6 +2929,23 @@ function handleField(el) {
       S.calendar = { importedAt: new Date().toISOString(), events };
       toast(`Kalender importiert: ${events.length} Termine, ${calHits().length} Abwesenheit(en) im Planungszeitraum.`);
       render();
+    };
+    reader.readAsText(file);
+    return;
+  }
+  if (field === 'recipeimport') {
+    const file = el.files && el.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const list = parseRecipeImport(String(reader.result || ''), file.name);
+        if (!list.length) return toast('Keine Rezepte in der Datei gefunden.');
+        const names = new Set(list.map(r => r.title));
+        S.imported = [...(S.imported || []).filter(r => !names.has(r.title)), ...list];
+        toast(list.length + ' Rezept(e) importiert.');
+        render();
+      } catch (e) { toast('Datei konnte nicht gelesen werden.'); }
     };
     reader.readAsText(file);
     return;
