@@ -216,7 +216,7 @@ function dayRecipe(day) {
 /* ----- Importierte Rezepte (Format: name, kategorie, zutaten[{name,menge}], schritte) ----- */
 function importedAsRecipes() {
   return (S.imported || []).map(r => ({
-    id: r.id, title: r.title, category: 'import', season: 'all', prepTime: r.prepTime,
+    id: r.id, title: r.title, category: 'import', season: 'all', prepTime: r.prepTime, quelle: r.quelle || '',
     components: null, imported: true, ingredients: r.ingredients, steps: r.steps,
     proteinTags: [], tags: [], uses: [], themes: [], wheatFree: false, bowl: false, custom: false
   }));
@@ -252,12 +252,12 @@ function parseRecipeImport(text, filename) {
       const c = l.split(',');
       const row = {};
       head.forEach((h, i) => { row[h] = (c[i] || '').trim(); });
-      rows.push({ title: row['titel'], kategorie: row['kategorie'], zeit: row['zubereitungszeit'], zutaten: [], schritte: [] });
+      rows.push({ title: row['titel'], kategorie: row['kategorie'], zeit: row['zubereitungszeit'], quelle: row['quelle'] || '', zutaten: [], schritte: [] });
     });
   } else {
     const data = JSON.parse(text);
     (Array.isArray(data) ? data : [data]).forEach(r => rows.push({
-      title: r.name || r.titel, kategorie: r.kategorie, zeit: r.zubereitungszeit || r.zeit,
+      title: r.name || r.titel, kategorie: r.kategorie, zeit: r.zubereitungszeit || r.zeit, quelle: r.quelle || r.source || '',
       zutaten: r.zutaten || [], schritte: r.schritte || []
     }));
   }
@@ -265,6 +265,7 @@ function parseRecipeImport(text, filename) {
     id: 'imp_' + Date.now() + '_' + k,
     title: String(r.title).slice(0, 100),
     kategorie: r.kategorie || 'Import',
+    quelle: String(r.quelle || '').slice(0, 60),
     prepTime: parseMinutes(r.zeit),
     ingredients: r.zutaten.map(z => ({ name: String(z.name), menge: String(z.menge || '') })),
     steps: r.schritte.map(String),
@@ -833,7 +834,7 @@ function renderPickerList() {
     <button class="row-item" data-action="choose" data-date="${date}" data-recipe="${esc(r.id)}">
       <span class="grow">
         <b>${esc(r.title)}</b>
-        <span class="small muted block">⏱ ${r.prepTime} Min · ${esc(RECIPE_CATEGORIES[r.category] || 'Import')}${r.wheatFree ? ' · 🌾 weizenfrei' : ''}${r.bowl ? ' · 🥗 Bowl' : ''}</span>
+        <span class="small muted block">⏱ ${r.prepTime} Min · ${esc(RECIPE_CATEGORIES[r.category] || 'Import')}${r.quelle ? ' · Quelle: ' + esc(r.quelle) : ''}${r.wheatFree ? ' · 🌾 weizenfrei' : ''}${r.bowl ? ' · 🥗 Bowl' : ''}</span>
         ${conf.length ? `<span class="warn-inline block">⚠ ${conf.map(c => esc(c.name) + ': ' + esc(c.label)).join(', ')}</span>` : ''}
       </span>
     </button>`).join('') || '<p class="pad muted small">Keine Treffer.</p>';
