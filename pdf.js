@@ -41,6 +41,7 @@ function buildPdf(pages, W = 842, H = 595) {
     const cid = pid + 1;
     let content = '';
     ops.forEach(o => {
+      if (o.rect) { content += `0.88 g ${o.x.toFixed(1)} ${o.y.toFixed(1)} ${o.w.toFixed(1)} ${o.h.toFixed(1)} re f 0 g\n`; return; }
       content += `BT /${o.b ? 'F2' : 'F1'} ${o.s || 10} Tf ${o.x.toFixed(1)} ${o.y.toFixed(1)} Td (${pdfLiteral(o.t)}) Tj ET\n`;
     });
     objs[pid] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cid} 0 R >>`;

@@ -1670,6 +1670,7 @@ function buildPdf(pages, W = 842, H = 595) {
     const cid = pid + 1;
     let content = '';
     ops.forEach(o => {
+      if (o.rect) { content += `0.88 g ${o.x.toFixed(1)} ${o.y.toFixed(1)} ${o.w.toFixed(1)} ${o.h.toFixed(1)} re f 0 g\n`; return; }
       content += `BT /${o.b ? 'F2' : 'F1'} ${o.s || 10} Tf ${o.x.toFixed(1)} ${o.y.toFixed(1)} Td (${pdfLiteral(o.t)}) Tj ET\n`;
     });
     objs[pid] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${cid} 0 R >>`;
@@ -2704,78 +2705,149 @@ function buildPlanContent() {
   };
 }
 
-/* Seiten (A4 quer): je Gericht Zutaten mit Gesamtmengen und Zubereitung, danach Einkaufsliste */
+/* PDF im Hochkant-Format A4 (595 x 842 pt).
+   Jeder Tag steht auf einer eigenen Seite: Kopfzeile mit Datum, Gericht,
+   Personen, Zutaten mit Gesamtmengen und nummerierte Zubereitung.
+   Danach die Einkaufsliste über die ganze Woche. */
+const PDF_W = 595;
+const PDF_H = 842;
+const PDF_TOP = 800;
+const PDF_BOTTOM = 50;
+
 function renderPdfPages(c) {
   const pages = [];
   let ops = [];
-  let y = 540;
-  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = 540; };
+  let y = PDF_TOP;
+  let dayNo = 0;
+  const newPage = () => { if (ops.length) pages.push(ops); ops = []; y = PDF_TOP; };
   const put = (text, o = {}) => {
-    const size = o.s || 9;
-    const lh = size + 3.5;
-    pdfWrap(text, o.max || 150).forEach(part => {
-      if (y - lh < 36) newPage();
+    const size = o.s || 10;
+    const lh = size + 4;
+    pdfWrap(text, o.max || 95).forEach(part => {
+      if (y - lh < PDF_BOTTOM) newPage();
       ops.push({ x: o.x || 40, y, s: size, b: !!o.b, t: part });
       y -= lh;
     });
   };
-  const gap = h => { y -= h; if (y < 36) newPage(); };
+  const cell = (text, x, o = {}) => {
+    const size = o.s || 10;
+    if (y - (size + 4) < PDF_BOTTOM) newPage();
+    ops.push({ x, y, s: size, b: !!o.b, t: text });
+  };
+  const rule = () => { if (y < PDF_BOTTOM + 10) newPage(); ops.push({ rect: true, x: 40, y: y - 3, w: PDF_W - 80, h: 0.8 }); y -= 10; };
+  const gap = h => { y -= h; if (y < PDF_BOTTOM) newPage(); };
+  const pageHead = () => {
+    ops.push({ rect: true, x: 40, y: PDF_TOP - 6, w: PDF_W - 80, h: 20 });
+    ops.push({ x: 46, y: PDF_TOP, s: 9, b: true, t: 'Wochenplan · ' + c.label });
+    ops.push({ x: PDF_W - 200, y: PDF_TOP, s: 9, t: (c.saved ? 'gespeichert' : 'Entwurf') });
+    y = PDF_TOP - 36;
+  };
+  const footer = () => {
+    ops.push({ x: 40, y: 28, s: 8, t: 'Stand ' + dateLong(todayISO()) + ' · Seite ' + (pages.length + 1) });
+  };
 
-  newPage();
-  put('Wochenplan · ' + c.label, { s: 16, b: true, max: 90 });
-  put((c.saved ? 'Gespeichert' : 'Entwurf') + ' · Gerichte zum Kochen, Mengen insgesamt für alle anwesenden Personen', { s: 9 });
-  gap(8);
+  /* Ein Tag = eine Seite */
   c.days.forEach(day => {
+    newPage();
+    pageHead();
+    dayNo += 1;
+    put(dateLong(day.date), { s: 20, b: true, max: 60 });
     if (!day.title) {
-      put(dateLong(day.date) + ' – noch offen', { s: 11, b: true, max: 120 });
-      gap(8);
+      gap(6);
+      put('Für diesen Tag ist noch kein Gericht gewählt.', { s: 11 });
+      footer();
       return;
     }
-    put(dateLong(day.date) + ' – ' + day.title, { s: 12, b: true, max: 105 });
-    const who = day.people.length ? day.people.join(', ') : 'niemand';
-    const meta = 'Zeit ' + day.minutes + ' Min · für ' + day.people.length + ' Person(en): ' + who +
-      (day.imported ? ' · Mengen wie importiert' : ' · Kochtopf gesamt ' + fmtG(day.grams) + ' · Protein gesamt ' + fmtN(day.protein, 0) + ' g');
-    put(meta, { s: 8.5, max: 165 });
-    put('Zutaten (gesamt):', { s: 9, b: true, max: 60 });
-    day.sums.forEach(s => put((s.grams != null ? fmtG(s.grams) : s.text) + '   ' + s.name, { s: 9, x: 56, max: 150 }));
-    if (day.steps.length) {
-      put('Zubereitung:', { s: 9, b: true, max: 60 });
-      day.steps.forEach((st, k) => put((k + 1) + '. ' + st, { s: 9, x: 56, max: 150 }));
-    }
-    gap(10);
-  });
-  if (c.skipped.length) {
+    put(day.title, { s: 14, b: true, max: 70 });
     gap(4);
-    put('Entfallene Tage: ' + c.skipped.map(dateShort).join(', '), { s: 9 });
+    const who = day.people.length ? day.people.join(', ') : 'niemand';
+    put('Zeit: ' + day.minutes + ' Min    ·    für ' + day.people.length + ' Person(en): ' + who, { s: 10, max: 100 });
+    if (!day.imported) {
+      put('Kochtopf gesamt: ' + fmtG(day.grams) + '    ·    Protein gesamt: ' + fmtN(day.protein, 0) + ' g', { s: 10, max: 100 });
+    } else {
+      put('Mengen wie in der Rezept-Datei angegeben', { s: 10, max: 100 });
+    }
+    gap(6);
+    rule();
+    put('Zutaten (gesamt)', { s: 12, b: true, max: 60 });
+    gap(2);
+    day.sums.forEach(s => {
+      const amount = s.grams != null ? fmtG(s.grams) : s.text;
+      if (y - 16 < PDF_BOTTOM) newPage();
+      cell(amount, 46, { s: 11, b: true });
+      pdfWrap(s.name, 70).forEach((part, k) => {
+        if (k === 0) cell(part, 170, { s: 11 });
+        else { y -= 14; cell(part, 170, { s: 11 }); }
+      });
+      y -= 16;
+    });
+    if (day.steps.length) {
+      gap(6);
+      rule();
+      put('Zubereitung', { s: 12, b: true, max: 60 });
+      gap(2);
+      day.steps.forEach((st, k) => {
+        pdfWrap((k + 1) + '.  ' + st, 92).forEach((part, j) => put(part, { s: 10.5, x: j === 0 ? 46 : 62, max: 92 }));
+        gap(4);
+      });
+    }
+    footer();
+  });
+
+  if (c.skipped.length) {
+    newPage();
+    pageHead();
+    put('Entfallene Tage', { s: 14, b: true, max: 60 });
+    put(c.skipped.map(dateLong).join(', '), { s: 10 });
+    footer();
   }
 
+  /* Einkaufsliste */
   newPage();
-  put('Einkaufsliste für die Woche · ' + c.label, { s: 16, b: true, max: 90 });
-  put('Gesamtmengen über alle Tage, Vorrat abgezogen, Packungen auf volle Lidl-Gebinde aufgerundet', { s: 9 });
+  ops.push({ rect: true, x: 40, y: PDF_TOP - 6, w: PDF_W - 80, h: 20 });
+  ops.push({ x: 46, y: PDF_TOP, s: 9, b: true, t: 'Einkaufsliste · ' + c.label });
+  y = PDF_TOP - 36;
+  put('Gesamtmengen über alle Tage, Vorrat abgezogen. Packungen auf volle Lidl-Gebinde aufgerundet.', { s: 9, max: 100 });
   gap(6);
   DEPARTMENTS.filter(d => d.key !== 'extra').forEach(d => {
     const items = c.shop.filter(l => l.dept === d.key);
     if (!items.length) return;
-    put(d.label, { s: 11, b: true, max: 100 });
-    items.forEach(l => put('[  ]  ' + l.packs + '× ' + l.packLabel + '  ·  ' + fmtG(l.net) + ' ' + l.name + (l.stock ? '  (Vorrat abgezogen)' : ''), { s: 9.5, x: 50, max: 130 }));
+    rule();
+    put(d.label, { s: 12, b: true, max: 60 });
+    gap(2);
+    items.forEach(l => {
+      if (y - 16 < PDF_BOTTOM) newPage();
+      cell('[  ]', 46, { s: 11 });
+      cell(l.packs + '× ' + l.packLabel, 80, { s: 11, b: true });
+      y -= 14;
+      pdfWrap(fmtG(l.net) + ' ' + l.name + (l.stock ? ' (Vorrat abgezogen)' : ''), 90).forEach(part => {
+        if (y - 14 < PDF_BOTTOM) newPage();
+        cell(part, 80, { s: 10 });
+        y -= 13;
+      });
+      gap(3);
+    });
     gap(4);
   });
   if (c.texts.length) {
-    put('Ohne Gramm-Angabe – bitte prüfen', { s: 11, b: true, max: 100 });
-    c.texts.forEach(t => put('[  ]  ' + t.name + ': ' + t.menge + ' (' + dateShort(t.date) + ')', { s: 9.5, x: 50, max: 130 }));
+    rule();
+    put('Ohne Gramm-Angabe – bitte prüfen', { s: 12, b: true, max: 60 });
+    c.texts.forEach(t => put('[  ]  ' + t.name + ': ' + t.menge + ' (' + dateShort(t.date) + ')', { s: 10, x: 46, max: 90 }));
     gap(4);
   }
   if (c.extras.length) {
-    put('Zusatzwünsche', { s: 11, b: true, max: 100 });
-    c.extras.forEach(t => put('[  ]  ' + t, { s: 9.5, x: 50, max: 130 }));
+    rule();
+    put('Zusatzwünsche', { s: 12, b: true, max: 60 });
+    c.extras.forEach(t => put('[  ]  ' + t, { s: 10, x: 46, max: 90 }));
   }
-  if (!c.shop.length && !c.texts.length && !c.extras.length) put('Nichts einzukaufen.', { s: 10 });
+  if (!c.shop.length && !c.texts.length && !c.extras.length) put('Nichts einzukaufen.', { s: 11 });
+  footer();
   newPage();
   return pages;
 }
 
 function downloadPdfFile(c) {
-  const bytes = buildPdf(renderPdfPages(c));
+  const bytes = buildPdf(renderPdfPages(c), PDF_W, PDF_H);
   const blob = new Blob([bytes], { type: 'application/pdf' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
