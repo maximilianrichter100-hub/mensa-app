@@ -7,7 +7,7 @@
    Lädt NACH recipes_extra.js.
    ========================================================================== */
 
-const BOWL_PROTEINS = ['huhn_innen', 'huhn_brust', 'putenbrust', 'lachs', 'garnele', 'hack', 'tofu', 'kichererbsen', 'thunfisch', 'linsen', 'edamame'];
+const BOWL_PROTEINS = ['huhn_innen', 'huhn_brust', 'putenbrust', 'lachs', 'garnele', 'hack', 'thunfisch', 'linsen'];
 const BOWL_CARBS = ['reis', 'quinoa', 'reisnudeln', 'kartoffel', 'drillinge', 'suesskartoffel'];
 const BOWL_VEGS = ['brokkoli', 'paprika', 'zucchini', 'spinat', 'karotten', 'blumenkohl', 'asia_tk', 'pak_choi', 'rosenkohl', 'spargel', 'kohlrabi', 'aubergine', 'mais_dose', 'erbsen_tk', 'kuerbis_hokkaido'];
 const BOWL_SALADS = ['avocado', 'gurke', 'tomaten', 'rucola', 'eisberg', 'rote_bete', 'radieschen', 'mango', 'krautsalat'];

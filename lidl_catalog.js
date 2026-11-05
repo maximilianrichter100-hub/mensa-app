@@ -41,8 +41,8 @@ const LIDL_CATALOG = [
   lidlItem('schwein', 'Schweinefilet', 'Metzgerfrisch', 'fleisch', 'ganzjaehrig', ['protein'], ['schwein'], 120, 21, 0.3, 3.5, 500, '500 g Schweinefilet'),
 
   /* ---------- Kühlregal ---------- */
-  lidlItem('skyr', 'Skyr Natur', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 63, 11, 4, 0.2, 500, '500 g Milbona Skyr'),
-  lidlItem('huettenkaese', 'Hüttenkäse', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 98, 11.5, 3.4, 4.3, 200, '200 g Milbona Hüttenkäse'),
+  lidlItem('skyr', 'Skyr Natur', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 63, 11, 4, 0.2, 500, '500 g Milbona Skyr'),
+  lidlItem('huettenkaese', 'Hüttenkäse', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 98, 11.5, 3.4, 4.3, 200, '200 g Milbona Hüttenkäse'),
   lidlItem('feta', 'Feta light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 170, 15, 3, 13, 200, '200 g Milbona Feta light'),
   lidlItem('gnocchi', 'Gnocchi', 'Chef Select', 'kuehl', 'ganzjaehrig', ['carb'], ['weizen'], 150, 4, 30, 1, 500, '500 g Chef Select Gnocchi'),
 

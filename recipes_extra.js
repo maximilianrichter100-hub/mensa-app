@@ -127,8 +127,8 @@ RECIPES.push(
     ]
   }),
   R({
-    id: 'r47', t: 'Veggie-Curry mit Kichererbsen, Spinat & Tofu',
-    cat: 'tiktok', s: 'all', prep: 25, p: 'tofu',
+    id: 'r47', t: 'Veggie-Curry mit Linsen, Kichererbsen & Spinat',
+    cat: 'tiktok', s: 'all', prep: 25, p: 'linsen',
     carb: ['reis', 100], veg: ['spinat', 150], salad: ['pak_choi', 60],
     extras: [['kokosmilch', 80], ['currypaste', 15], ['kichererbsen', 60]],
     steps: [
@@ -139,8 +139,8 @@ RECIPES.push(
     ]
   }),
   R({
-    id: 'r48', t: 'Asia-Tofu-Wok mit Pak Choi, Sojasprossen & Sojasauce',
-    cat: 'tiktok', s: 'all', prep: 15, p: 'tofu',
+    id: 'r48', t: 'Asia-Linsen-Wok mit Pak Choi, Sojasprossen & Sojasauce',
+    cat: 'tiktok', s: 'all', prep: 15, p: 'linsen',
     carb: ['reisnudeln', 100], veg: ['asia_tk', 150], salad: ['gurke', 60],
     extras: [['sojasauce', 20], ['sojasprossen', 100]],
     steps: [
@@ -247,8 +247,8 @@ RECIPES.push(
     ]
   }),
   R({
-    id: 'r57', t: 'Frühlings-Erbsen-Omelett mit Schmand & Radieschen',
-    cat: 'tiktok', s: 'fruehling_sommer', prep: 15, p: 'eier',
+    id: 'r57', t: 'Frühlings-Erbsen-Pfanne mit Pute, Schmand & Radieschen',
+    cat: 'tiktok', s: 'fruehling_sommer', prep: 15, p: 'putenbrust',
     carb: ['drillinge', 150], veg: ['erbsen_tk', 150], salad: ['radieschen', 60],
     extras: [['schmand_light', 40]],
     steps: [

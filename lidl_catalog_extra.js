@@ -34,21 +34,21 @@ const LIDL_CATALOG_EXTRA = [
   lidlItem('seelachs', 'Seelachsfilet', 'Ocean Sea', 'fleisch', 'ganzjaehrig', ['protein'], ['fisch'], 90, 19, 0, 1.2, 300, '300 g Ocean Sea Seelachs'),
 
   /* ---------- Kühlregal ---------- */
-  lidlItem('quark', 'Magerquark', 'Milbona', 'kuehl', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 67, 12, 4, 0.2, 500, '500 g Milbona Magerquark'),
+  lidlItem('quark', 'Magerquark', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 67, 12, 4, 0.2, 500, '500 g Milbona Magerquark'),
   lidlItem('mozzarella_light', 'Mozzarella light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 170, 22, 1, 9, 125, '125 g Mozzarella light'),
   lidlItem('frischkaese_light', 'Frischkäse light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 110, 9, 4, 8, 200, '200 g Frischkäse light'),
   lidlItem('schmand_light', 'Schmand light', 'Milbona', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 120, 4, 4, 11, 200, '200 g Schmand light'),
-  lidlItem('eier', 'Eier (Bodenhaltung)', '', 'kuehl', 'ganzjaehrig', ['protein'], ['vegetarisch'], 143, 12.6, 0.7, 9.5, 630, '10 Eier (ca. 630 g)'),
+  lidlItem('eier', 'Eier (Bodenhaltung)', '', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 143, 12.6, 0.7, 9.5, 630, '10 Eier (ca. 630 g)'),
   lidlItem('parmesan', 'Parmesan (gerieben)', 'Deluxe', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 392, 36, 0, 27, 150, '150 g Parmesan'),
-  lidlItem('tofu', 'Tofu natur', 'Vantastic', 'kuehl', 'ganzjaehrig', ['protein'], ['vegetarisch'], 76, 8, 1, 4.8, 200, '200 g Tofu natur'),
+  lidlItem('tofu', 'Tofu natur', 'Vantastic', 'kuehl', 'ganzjaehrig', ['extra'], ['vegetarisch'], 76, 8, 1, 4.8, 200, '200 g Tofu natur'),
 
   /* ---------- Tiefkühltruhe ---------- */
-  lidlItem('edamame', 'Edamame (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['protein', 'veggie'], ['vegetarisch'], 121, 11.9, 8.9, 5.2, 400, '400 g Freshona Edamame'),
+  lidlItem('edamame', 'Edamame (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie', 'extra'], ['vegetarisch'], 121, 11.9, 8.9, 5.2, 400, '400 g Freshona Edamame'),
   lidlItem('erbsen_tk', 'Erbsen (TK)', 'Freshona', 'tk', 'ganzjaehrig', ['veggie'], [], 81, 5.4, 14, 0.4, 400, '400 g Freshona Erbsen'),
 
   /* ---------- Trockensortiment & Dosen ---------- */
-  lidlItem('kichererbsen', 'Kichererbsen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 120, 7, 15, 2.5, 240, '240 g Golden Sun Kichererbsen'),
-  lidlItem('kidneybohnen', 'Kidneybohnen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['protein', 'extra'], ['vegetarisch'], 110, 7.5, 15, 0.7, 240, '240 g Golden Sun Kidneybohnen'),
+  lidlItem('kichererbsen', 'Kichererbsen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['vegetarisch'], 120, 7, 15, 2.5, 240, '240 g Golden Sun Kichererbsen'),
+  lidlItem('kidneybohnen', 'Kidneybohnen (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['extra'], ['vegetarisch'], 110, 7.5, 15, 0.7, 240, '240 g Golden Sun Kidneybohnen'),
   lidlItem('thunfisch', 'Thunfisch in eigenem Saft (Abtropfgewicht)', 'Ocean Sea', 'trocken', 'ganzjaehrig', ['protein'], ['fisch'], 100, 22, 0, 1, 160, '160 g Ocean Sea Thunfisch'),
   lidlItem('mais_dose', 'Mais (Dose, Abtropfgewicht)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['veggie', 'extra'], [], 90, 3.3, 19, 1.5, 285, '285 g Golden Sun Mais'),
   lidlItem('penne', 'Penne (Hartweizen)', 'Golden Sun', 'trocken', 'ganzjaehrig', ['carb'], ['weizen'], 350, 12, 70, 1.5, 500, '500 g Golden Sun Penne'),
