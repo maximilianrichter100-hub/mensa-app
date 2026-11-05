@@ -215,7 +215,7 @@ function dayRecipe(day) {
 
 /* ----- Importierte Rezepte (Format: name, kategorie, zutaten[{name,menge}], schritte) ----- */
 function importedAsRecipes() {
-  return (S.imported || []).map(r => ({
+  return [...BUILTIN_IMPORTED.filter(b => !(S.imported || []).some(u => u.title === b.title)), ...(S.imported || [])].map(r => ({
     id: r.id, title: r.title, category: 'import', season: 'all', prepTime: r.prepTime, quelle: r.quelle || '',
     components: null, imported: true, ingredients: r.ingredients, steps: r.steps,
     proteinTags: [], tags: [], uses: [], themes: [], wheatFree: false, bowl: false, custom: false
@@ -727,7 +727,7 @@ function viewMehr() {
       <p class="eyebrow dept">Rezepte importieren</p>
       <section class="card">
         <p class="small">Rezept-Datei als .json (Felder: name, kategorie, zutaten [{name, menge}], schritte) oder .csv (Titel, Kategorie, Zubereitungszeit). Mengen werden genau so übernommen, wie sie in der Datei stehen.</p>
-        <p class="small muted mt">${S.imported.length} importierte Rezepte</p>
+        <p class="small muted mt">${BUILTIN_IMPORTED.length} eingebaute und ${S.imported.length} importierte Rezepte</p>
         <label class="btn file-btn mt">📥 Rezept-Datei wählen<input type="file" accept=".json,.csv,application/json,text/csv" data-field="recipeimport" hidden></label>
         ${S.imported.length ? '<button class="btn mt" data-action="importClear">Importierte Rezepte löschen</button>' : ''}
       </section>
